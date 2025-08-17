@@ -1,7 +1,5 @@
 # KPrompt: AI Prompt Engineering Workbench
 
-![KPrompt UI Screenshot](https://i.imgur.com/example.png) <!-- It's good practice to add a real screenshot URL here -->
-
 > A specialized workbench for developers to engineer high-performance AI interactions, featuring a System Prompt Architect and a Conversational Prompt Refiner.
 
 KPrompt is a sophisticated, web-based tool designed for prompt engineers and developers looking to master the art of AI communication. It provides two specialized modules: the **System Prompt Architect** for crafting robust AI personas and the **Conversational Prompt Refiner** for optimizing user prompts within a given conversational context. Built with a sleek "Liquid Glass" design system, KPrompt offers an intuitive and powerful environment for developing, testing, and refining AI prompts to achieve maximum performance and reliability.
