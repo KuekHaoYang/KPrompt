@@ -1,0 +1,124 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KPrompt: AI Prompt Engineering Workbench</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --font-family-system: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "Arial", "Noto Sans", "Liberation Sans", sans-serif;
+          
+            /* Light Mode Palette */
+            --bg-color-light: #f0f2f5;
+            --bg-image-light: linear-gradient(120deg, #fdfbfb 0%, #ebedee 100%);
+            --text-color-light: #1d1d1f;
+            --text-color-secondary-light: #6e6e73;
+            --accent-color-light: #007aff;
+            --glass-bg-light: rgba(242, 242, 247, 0.8);
+            --glass-border-light: rgba(255, 255, 255, 0.5);
+            --shadow-color-light: rgba(0, 0, 0, 0.1);
+
+            /* Dark Mode Palette */
+            --bg-color-dark: #121212;
+            --bg-image-dark: linear-gradient(120deg, #272B30 0%, #121212 100%);
+            --text-color-dark: #f5f5f7;
+            --text-color-secondary-dark: #8e8e93;
+            --accent-color-dark: #0a84ff;
+            --glass-bg-dark: rgba(28, 28, 30, 0.75);
+            --glass-border-dark: rgba(60, 60, 60, 0.7);
+            --shadow-color-dark: rgba(0, 0, 0, 0.3);
+
+            /* Universal Variables */
+            --radius-2xl: 1.5rem; 
+            --radius-full: 9999px;
+            --shadow-sm: 0 2px 4px var(--shadow-color);
+            --shadow-md: 0 4px 12px var(--shadow-color);
+            --transition-fluid: 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        body {
+            --bg-color: var(--bg-color-light);
+            --bg-image: var(--bg-image-light);
+            --text-color: var(--text-color-light);
+            --text-color-secondary: var(--text-color-secondary-light);
+            --accent-color: var(--accent-color-light);
+            --glass-bg: var(--glass-bg-light);
+            --glass-border: var(--glass-border-light);
+            --shadow-color: var(--shadow-color-light);
+            background-color: var(--bg-color);
+            background-image: var(--bg-image);
+            background-attachment: fixed;
+            font-family: var(--font-family-system);
+            color: var(--text-color);
+            transition: background 0.3s ease;
+        }
+
+        body.dark {
+            --bg-color: var(--bg-color-dark);
+            --bg-image: var(--bg-image-dark);
+            --text-color: var(--text-color-dark);
+            --text-color-secondary: var(--text-color-secondary-dark);
+            --accent-color: var(--accent-color-dark);
+            --glass-bg: var(--glass-bg-dark);
+            --glass-border: var(--glass-border-dark);
+            --shadow-color: var(--shadow-color-dark);
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-out-shrink {
+            animation: fadeOutShrink 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        }
+
+        @keyframes fadeOutShrink {
+            from {
+                opacity: 1;
+                transform: scale(1);
+                max-height: 200px; /* A reasonable max-height to animate from */
+            }
+            to {
+                opacity: 0;
+                transform: scale(0.95);
+                max-height: 0;
+                padding-top: 0;
+                padding-bottom: 0;
+                margin-top: 0;
+                margin-bottom: 0;
+                border-width: 0;
+                overflow: hidden;
+            }
+        }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^18.2.0",
+    "react/": "https://esm.sh/react@^18.2.0/",
+    "react-dom/client": "https://esm.sh/react-dom@^18.2.0/client",
+    "@google/genai": "https://esm.sh/@google/genai@^1.14.0",
+    "react-dom/": "https://esm.sh/react-dom@^18.2.0/"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+<body>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+</body>
+</html>

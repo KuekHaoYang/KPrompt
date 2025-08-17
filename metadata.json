@@ -1,0 +1,5 @@
+{
+  "name": "KPrompt: AI Prompt Engineering Workbench",
+  "description": "A specialized workbench for developers to engineer high-performance AI interactions, featuring a System Prompt Architect and a Conversational Prompt Refiner.",
+  "requestFramePermissions": []
+}
