@@ -1,17 +1,43 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { CheckIcon } from './Icon';
+import { listAvailableModels } from '../services/geminiService';
 
 interface ModelSelectorProps extends React.SelectHTMLAttributes<HTMLSelectElement> {}
 
 const ModelSelector: React.FC<ModelSelectorProps> = ({ value, onChange, ...props }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [options, setOptions] = useState([{ value: 'gemini-2.5-flash', label: 'gemini-2.5-flash' }]);
   const wrapperRef = useRef<HTMLDivElement>(null);
-  
-  // In a real app, these options might come from props or a config file
-  const options = [
-    { value: 'gemini-2.5-flash', label: 'gemini-2.5-flash' }
-  ];
+
+  const fetchModels = useCallback(async () => {
+    const modelNames = await listAvailableModels();
+    const modelOptions = modelNames.map(name => ({ value: name, label: name }));
+    
+    if (modelOptions.length > 0) {
+      setOptions(modelOptions);
+      // If current value is not in the new list, update it to the first available model
+      if (onChange && !modelNames.includes(value as string)) {
+          const syntheticEvent = {
+            target: { value: modelNames[0] }
+          } as unknown as React.ChangeEvent<HTMLSelectElement>;
+          onChange(syntheticEvent);
+      }
+    }
+  }, [value, onChange]);
+
+  useEffect(() => {
+    fetchModels();
+    
+    const handleSettingsUpdate = () => {
+        fetchModels();
+    };
+
+    window.addEventListener('settings_updated', handleSettingsUpdate);
+    return () => {
+        window.removeEventListener('settings_updated', handleSettingsUpdate);
+    };
+  }, [fetchModels]);
 
   const handleToggle = useCallback(() => {
     setIsOpen(prev => !prev);
@@ -19,7 +45,6 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ value, onChange, ...props
 
   const handleSelect = (selectedValue: string) => {
     if (onChange) {
-      // Create a synthetic event that mimics the native select event
       const syntheticEvent = {
         target: { value: selectedValue }
       } as unknown as React.ChangeEvent<HTMLSelectElement>;

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import GlassCard from './GlassCard';
 import Button from './Button';
@@ -9,6 +8,7 @@ const API_KEY_ENV = process.env.API_KEY;
 
 const Settings: React.FC = () => {
     const [apiKey, setApiKey] = useState('');
+    const [apiHost, setApiHost] = useState('');
     const [isSaved, setIsSaved] = useState(false);
     const isKeyInEnv = !!API_KEY_ENV;
 
@@ -19,22 +19,29 @@ const Settings: React.FC = () => {
                 setApiKey(savedKey);
             }
         }
+        const savedHost = localStorage.getItem('gemini_api_host');
+        setApiHost(savedHost || 'generativelanguage.googleapis.com');
     }, [isKeyInEnv]);
 
     const handleSave = () => {
         if (!isKeyInEnv) {
             localStorage.setItem('gemini_api_key', apiKey);
-            setIsSaved(true);
-            setTimeout(() => setIsSaved(false), 2000);
         }
+        localStorage.setItem('gemini_api_host', apiHost);
+        setIsSaved(true);
+        setTimeout(() => setIsSaved(false), 2000);
+        // Force model list refetch after settings change
+        window.dispatchEvent(new Event('settings_updated'));
     };
+
+    const canSave = (!isKeyInEnv && apiKey.trim() !== '') || apiHost.trim() !== '';
 
     return (
         <GlassCard className="mb-8">
             <div className="space-y-4">
                 <h2 className="text-2xl font-bold" style={{ color: 'var(--text-color)' }}>API Configuration</h2>
                 <p style={{ color: 'var(--text-color-secondary)' }}>
-                    Your API key is stored locally in your browser and is not sent anywhere except to Google's API endpoints.
+                    Your API key is stored locally in your browser and is not sent anywhere except to the configured API host.
                 </p>
 
                 <div className="space-y-2">
@@ -53,21 +60,21 @@ const Settings: React.FC = () => {
                 
                 <div className="space-y-2">
                     <label htmlFor="api-host" className="block text-sm font-medium" style={{color: 'var(--text-color-secondary)'}}>
-                        API Host (Default)
+                        API Host
                     </label>
                     <Input
                         id="api-host"
                         type="text"
-                        value="generativelanguage.googleapis.com"
-                        disabled={true}
+                        value={apiHost}
+                        onChange={(e) => setApiHost(e.target.value)}
                     />
                      <p className="text-xs" style={{ color: 'var(--text-color-secondary)' }}>
-                        The API host is not currently configurable.
+                        Custom host used for all API requests, including model fetching and prompt generation.
                     </p>
                 </div>
                 
                 <div className="flex items-center gap-4">
-                    <Button onClick={handleSave} disabled={isKeyInEnv || !apiKey.trim()}>
+                    <Button onClick={handleSave} disabled={!canSave}>
                         {isSaved ? <div className="flex items-center gap-2"><CheckIcon className="w-5 h-5" /> Saved</div> : 'Save Settings'}
                     </Button>
                 </div>
