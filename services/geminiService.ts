@@ -1,4 +1,3 @@
-
 import { GoogleGenAI } from "@google/genai";
 
 // As per guidelines, the API key is exclusively from process.env.API_KEY
@@ -206,19 +205,25 @@ Refined System Prompt:
   }
 };
 
-export const getOptimizationAdvice = async (promptToAnalyze: string, model: string, language: string, variables: string[]): Promise<string> => {
+export const getOptimizationAdvice = async (
+  promptToAnalyze: string,
+  promptType: 'system' | 'user',
+  model: string,
+  language: string,
+  variables: string[]
+): Promise<string> => {
   const SYSTEM_PROMPT_RULES = await getSystemPromptRules();
   const variablesSection = formatVariablesForPrompt(variables);
 
   const masterPrompt = `
-I am an expert prompt engineering advisor. My task is to analyze a given prompt (which could be a system prompt or a user prompt) and provide a concise, actionable list of suggestions for improvement, based on the principles outlined below.
+I am an expert prompt engineering advisor. My task is to analyze a given ${promptType} prompt and provide a concise, actionable list of suggestions for improvement, based on the principles outlined below.
 
 ---
 Here are the principles I will follow:
 ${SYSTEM_PROMPT_RULES}
 ---
 ${variablesSection}
-Prompt to Analyze:
+${promptType.charAt(0).toUpperCase() + promptType.slice(1)} Prompt to Analyze:
 ---
 ${promptToAnalyze}
 ---

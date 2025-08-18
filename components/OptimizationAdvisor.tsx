@@ -1,10 +1,10 @@
-
 import React, { useState, useCallback } from 'react';
 import { getOptimizationAdvice } from '../services/geminiService';
 import GlassCard from './GlassCard';
 import Button from './Button';
 import TextArea from './TextArea';
 import Loader from './Loader';
+import PromptTypeSelector, { PromptType } from './PromptTypeSelector';
 
 interface OptimizationAdvisorProps {
   modelName: string;
@@ -13,6 +13,7 @@ interface OptimizationAdvisorProps {
 }
 
 const OptimizationAdvisor: React.FC<OptimizationAdvisorProps> = ({ modelName, language, variables }) => {
+  const [promptType, setPromptType] = useState<PromptType>('system');
   const [promptToAnalyze, setPromptToAnalyze] = useState('');
   const [advice, setAdvice] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -27,7 +28,7 @@ const OptimizationAdvisor: React.FC<OptimizationAdvisorProps> = ({ modelName, la
     setError(null);
     setAdvice([]);
     try {
-      const result = await getOptimizationAdvice(promptToAnalyze, modelName, language, variables);
+      const result = await getOptimizationAdvice(promptToAnalyze, promptType, modelName, language, variables);
       const adviceList = result.split('\n')
         .map(s => s.replace(/^[*-]\s*/, '').trim())
         .filter(Boolean);
@@ -37,7 +38,7 @@ const OptimizationAdvisor: React.FC<OptimizationAdvisorProps> = ({ modelName, la
     } finally {
       setIsLoading(false);
     }
-  }, [promptToAnalyze, modelName, language, variables]);
+  }, [promptToAnalyze, modelName, language, variables, promptType]);
 
   return (
     <GlassCard>
@@ -46,10 +47,17 @@ const OptimizationAdvisor: React.FC<OptimizationAdvisorProps> = ({ modelName, la
         <p style={{ color: 'var(--text-color-secondary)' }}>
           Get expert, actionable advice on how to improve any prompt.
         </p>
+
+        <div className="space-y-3">
+          <label className="block text-sm font-medium" style={{color: 'var(--text-color-secondary)'}}>
+            Prompt Type
+          </label>
+          <PromptTypeSelector promptType={promptType} onChange={setPromptType} />
+        </div>
         
         <TextArea
           id="prompt-to-analyze"
-          placeholder="Paste any prompt (system or user) here for analysis..."
+          placeholder={`Paste any ${promptType} prompt here for analysis...`}
           value={promptToAnalyze}
           onChange={(e) => setPromptToAnalyze(e.target.value)}
           rows={4}
