@@ -5,6 +5,8 @@ import ConversationalPromptRefiner from './components/ConversationalPromptRefine
 import Header from './components/Header';
 import Input from './components/Input';
 import VariablesInput from './components/VariablesInput';
+import SystemPromptRefiner from './components/SystemPromptRefiner';
+import OptimizationAdvisor from './components/OptimizationAdvisor';
 
 const App: React.FC = () => {
   const [modelName, setModelName] = useState('gemini-2.5-flash');
@@ -55,6 +57,8 @@ const App: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
           <SystemPromptArchitect modelName={modelName} language={language} variables={variables} />
           <ConversationalPromptRefiner modelName={modelName} language={language} variables={variables} />
+          <SystemPromptRefiner modelName={modelName} language={language} variables={variables} />
+          <OptimizationAdvisor modelName={modelName} language={language} variables={variables} />
         </div>
       </main>
       <footer className="text-center py-8 mt-12">

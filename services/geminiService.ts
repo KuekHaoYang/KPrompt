@@ -166,3 +166,80 @@ Refined Prompt:
         throw error;
     }
 };
+
+export const refineSystemPrompt = async (existingPrompt: string, model: string, language: string, variables: string[]): Promise<string> => {
+  const SYSTEM_PROMPT_RULES = await getSystemPromptRules();
+  const variablesSection = formatVariablesForPrompt(variables);
+
+  const masterPrompt = `
+I am an expert in AI prompt engineering, specializing in optimizing System Prompts for maximum performance. My task is to take a user's existing System Prompt and refine it to be more robust, clear, and effective, following the principles outlined below.
+
+---
+Here are the principles I will follow for refining the prompt:
+${SYSTEM_PROMPT_RULES}
+---
+${variablesSection}
+I will analyze the user's existing prompt and rewrite it to better align with the principles of elite prompt engineering. The refined prompt should maintain the original intent but be significantly improved in structure, clarity, and effectiveness.
+
+User's Existing System Prompt:
+---
+${existingPrompt}
+---
+
+Based on the user's prompt, the rules, and any specified variables, refine the System Prompt.
+
+**Output Instructions:**
+- You must generate ONLY the text of the refined System Prompt itself.
+- Do NOT include any introductory phrases, explanations, or markdown formatting like \`\`\`.
+- The output should be ready to be directly copied and used as an improved system prompt.
+- **You must generate the output in ${language}.**
+
+Refined System Prompt:
+  `;
+
+  try {
+    const result = await generateContent(masterPrompt, model);
+    return result.replace(/```/g, '').trim();
+  } catch (error: any) {
+    console.error("Error refining system prompt:", error);
+    throw error;
+  }
+};
+
+export const getOptimizationAdvice = async (promptToAnalyze: string, model: string, language: string, variables: string[]): Promise<string> => {
+  const SYSTEM_PROMPT_RULES = await getSystemPromptRules();
+  const variablesSection = formatVariablesForPrompt(variables);
+
+  const masterPrompt = `
+I am an expert prompt engineering advisor. My task is to analyze a given prompt (which could be a system prompt or a user prompt) and provide a concise, actionable list of suggestions for improvement, based on the principles outlined below.
+
+---
+Here are the principles I will follow:
+${SYSTEM_PROMPT_RULES}
+---
+${variablesSection}
+Prompt to Analyze:
+---
+${promptToAnalyze}
+---
+
+Based on the provided prompt and the principles, generate a list of optimization suggestions.
+
+**CRITICAL Output Instructions:**
+- You must generate ONLY a concise, bulleted list of suggestions.
+- Each suggestion must be a brief, single point.
+- Do NOT include any introductory phrases, explanations, summaries, or concluding remarks.
+- The output should be a raw list of points, with each point on a new line, starting with a hyphen or asterisk.
+- **You must generate the output in ${language}.**
+
+Optimization Suggestions:
+  `;
+
+  try {
+    const result = await generateContent(masterPrompt, model);
+    return result.replace(/```/g, '').trim();
+  } catch (error: any) {
+    console.error("Error getting optimization advice:", error);
+    throw error;
+  }
+};
