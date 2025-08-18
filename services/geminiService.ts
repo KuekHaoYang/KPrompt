@@ -52,7 +52,7 @@ async function generateContent(masterPrompt: string, model: string): Promise<str
     }
 }
 
-export const generateSystemPrompt = async (description: string, model: string): Promise<string> => {
+export const generateSystemPrompt = async (description: string, model: string, language: string): Promise<string> => {
   const SYSTEM_PROMPT_RULES = await getSystemPromptRules();
   const masterPrompt = `
 I am an expert in AI prompt engineering, specializing in crafting high-performance System Prompts. My task is to take a user's simple description of a desired AI persona and expand it into a formal, robust System Prompt.
@@ -73,6 +73,7 @@ Based on the user's description and the rules, generate the System Prompt.
 - You must generate ONLY the text of the System Prompt itself.
 - Do NOT include any introductory phrases, explanations, or markdown formatting like \`\`\`.
 - The output should be ready to be directly copied and used as a system prompt.
+- **You must generate the output in ${language}.**
 
 System Prompt:
   `;
@@ -92,6 +93,7 @@ export const refineUserPrompt = async (
   history: string,
   draftPrompt: string,
   model: string,
+  language: string,
 ): Promise<string> => {
     const SYSTEM_PROMPT_RULES = await getSystemPromptRules();
     const masterPrompt = `
@@ -123,6 +125,7 @@ Based on the context, refine the user's draft prompt.
 - You must generate ONLY the text of the refined prompt itself.
 - Do NOT include any introductory phrases, explanations, or markdown formatting like \`\`\`.
 - The output should be ready to be directly copied and used as a user prompt.
+- **You must generate the output in ${language}.**
 
 Refined Prompt:
     `;

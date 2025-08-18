@@ -9,9 +9,10 @@ import { CopyIcon, CheckIcon } from './Icon';
 
 interface SystemPromptArchitectProps {
   modelName: string;
+  language: string;
 }
 
-const SystemPromptArchitect: React.FC<SystemPromptArchitectProps> = ({ modelName }) => {
+const SystemPromptArchitect: React.FC<SystemPromptArchitectProps> = ({ modelName, language }) => {
   const [description, setDescription] = useState('');
   const [generatedPrompt, setGeneratedPrompt] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -27,14 +28,14 @@ const SystemPromptArchitect: React.FC<SystemPromptArchitectProps> = ({ modelName
     setError(null);
     setGeneratedPrompt('');
     try {
-      const result = await generateSystemPrompt(description, modelName);
+      const result = await generateSystemPrompt(description, modelName, language);
       setGeneratedPrompt(result);
     } catch (e: any) {
       setError(e.message || 'An unknown error occurred.');
     } finally {
       setIsLoading(false);
     }
-  }, [description, modelName]);
+  }, [description, modelName, language]);
 
   const handleCopy = useCallback(() => {
     if (generatedPrompt) {
