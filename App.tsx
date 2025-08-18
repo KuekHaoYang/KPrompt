@@ -5,7 +5,6 @@ import ConversationalPromptRefiner from './components/ConversationalPromptRefine
 import Header from './components/Header';
 import Input from './components/Input';
 import VariablesInput from './components/VariablesInput';
-import SystemPromptRefiner from './components/SystemPromptRefiner';
 import OptimizationAdvisor from './components/OptimizationAdvisor';
 
 const App: React.FC = () => {
@@ -54,10 +53,11 @@ const App: React.FC = () => {
               <VariablesInput variables={variables} onChange={setVariables} />
             </div>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-          <SystemPromptArchitect modelName={modelName} language={language} variables={variables} />
-          <ConversationalPromptRefiner modelName={modelName} language={language} variables={variables} />
-          <SystemPromptRefiner modelName={modelName} language={language} variables={variables} />
+        <div className="space-y-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+            <SystemPromptArchitect modelName={modelName} language={language} variables={variables} />
+            <ConversationalPromptRefiner modelName={modelName} language={language} variables={variables} />
+          </div>
           <OptimizationAdvisor modelName={modelName} language={language} variables={variables} />
         </div>
       </main>

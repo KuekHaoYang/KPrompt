@@ -1,3 +1,4 @@
+
 import { GoogleGenAI } from "@google/genai";
 
 // As per guidelines, the API key is exclusively from process.env.API_KEY
@@ -245,6 +246,58 @@ Optimization Suggestions:
     return result.replace(/```/g, '').trim();
   } catch (error: any) {
     console.error("Error getting optimization advice:", error);
+    throw error;
+  }
+};
+
+export const applyOptimizationAdvice = async (
+  originalPrompt: string,
+  advice: string[],
+  promptType: 'system' | 'user',
+  model: string,
+  language: string,
+  variables: string[]
+): Promise<string> => {
+  const SYSTEM_PROMPT_RULES = await getSystemPromptRules();
+  const variablesSection = formatVariablesForPrompt(variables);
+  const adviceSection = advice.map(a => `- ${a}`).join('\n');
+
+  const masterPrompt = `
+I am an expert in AI prompt engineering, specializing in optimizing prompts for maximum performance. My task is to take a user's existing ${promptType} prompt, along with a list of specific optimization suggestions, and rewrite the prompt to incorporate that advice.
+
+---
+Here are the core principles of elite prompt engineering I will follow:
+${SYSTEM_PROMPT_RULES}
+---
+${variablesSection}
+I will analyze the user's original prompt and the provided list of suggestions. I must rewrite the prompt to implement all suggestions, resulting in a version that is more robust, clear, and effective.
+
+Original ${promptType.charAt(0).toUpperCase() + promptType.slice(1)} Prompt:
+---
+${originalPrompt}
+---
+
+Optimization Suggestions to Apply:
+---
+${adviceSection}
+---
+
+Based on the original prompt, the suggestions, the core principles, and any specified variables, generate the new, refined prompt.
+
+**CRITICAL Output Instructions:**
+- You must generate ONLY the text of the new, refined prompt itself.
+- Do NOT include any introductory phrases, explanations, or markdown formatting like \`\`\`.
+- The output should be ready to be directly copied and used as an improved prompt.
+- **You must generate the output in ${language}.**
+
+Refined ${promptType.charAt(0).toUpperCase() + promptType.slice(1)} Prompt:
+  `;
+
+  try {
+    const result = await generateContent(masterPrompt, model);
+    return result.replace(/```/g, '').trim();
+  } catch (error: any) {
+    console.error("Error applying optimization advice:", error);
     throw error;
   }
 };
