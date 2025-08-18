@@ -57,9 +57,10 @@ const RoleSelector: React.FC<{ role: MessageRole, onChange: (role: MessageRole) 
 interface ConversationalPromptRefinerProps {
   modelName: string;
   language: string;
+  variables: string[];
 }
 
-const ConversationalPromptRefiner: React.FC<ConversationalPromptRefinerProps> = ({ modelName, language }) => {
+const ConversationalPromptRefiner: React.FC<ConversationalPromptRefinerProps> = ({ modelName, language, variables }) => {
   const [systemPrompt, setSystemPrompt] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draftPrompt, setDraftPrompt] = useState('');
@@ -100,14 +101,14 @@ const ConversationalPromptRefiner: React.FC<ConversationalPromptRefinerProps> = 
       .join('\n\n');
 
     try {
-      const result = await refineUserPrompt(systemPrompt, historyString, draftPrompt, modelName, language);
+      const result = await refineUserPrompt(systemPrompt, historyString, draftPrompt, modelName, language, variables);
       setRefinedPrompt(result);
     } catch (e: any) {
         setError(e.message || 'An unknown error occurred.');
     } finally {
       setIsLoading(false);
     }
-  }, [systemPrompt, messages, draftPrompt, modelName, language]);
+  }, [systemPrompt, messages, draftPrompt, modelName, language, variables]);
   
   const handleCopy = useCallback(() => {
     if (refinedPrompt) {

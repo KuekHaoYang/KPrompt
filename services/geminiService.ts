@@ -52,8 +52,32 @@ async function generateContent(masterPrompt: string, model: string): Promise<str
     }
 }
 
-export const generateSystemPrompt = async (description: string, model: string, language: string): Promise<string> => {
+const formatVariablesForPrompt = (variables: string[]): string => {
+    if (!variables || variables.length === 0 || variables.every(v => v.trim() === '')) {
+        return '';
+    }
+    const nonEmptyVariables = variables.filter(v => v.trim() !== '');
+    if (nonEmptyVariables.length === 0) {
+        return '';
+    }
+    
+    return `
+---
+Variable Integration:
+The final prompt must be designed to be used in a programmatic context. As such, it needs to include specific placeholders or variables. You must incorporate the following variables into the generated prompt where it makes logical sense to do so.
+
+Variable List:
+${nonEmptyVariables.map(v => `- \`${v}\``).join('\n')}
+
+For example, if a variable is \`{{user_topic}}\`, you might include a sentence like "The user will provide the \`{{user_topic}}\` for you to write about."
+---
+    `;
+};
+
+export const generateSystemPrompt = async (description: string, model: string, language: string, variables: string[]): Promise<string> => {
   const SYSTEM_PROMPT_RULES = await getSystemPromptRules();
+  const variablesSection = formatVariablesForPrompt(variables);
+
   const masterPrompt = `
 I am an expert in AI prompt engineering, specializing in crafting high-performance System Prompts. My task is to take a user's simple description of a desired AI persona and expand it into a formal, robust System Prompt.
 
@@ -61,13 +85,13 @@ I am an expert in AI prompt engineering, specializing in crafting high-performan
 Here are the rules I will follow:
 ${SYSTEM_PROMPT_RULES}
 ---
-
+${variablesSection}
 User's Description:
 ---
 ${description}
 ---
 
-Based on the user's description and the rules, generate the System Prompt.
+Based on the user's description, the rules, and any specified variables, generate the System Prompt.
 
 **Output Instructions:**
 - You must generate ONLY the text of the System Prompt itself.
@@ -94,8 +118,11 @@ export const refineUserPrompt = async (
   draftPrompt: string,
   model: string,
   language: string,
+  variables: string[],
 ): Promise<string> => {
     const SYSTEM_PROMPT_RULES = await getSystemPromptRules();
+    const variablesSection = formatVariablesForPrompt(variables);
+
     const masterPrompt = `
 I am an expert in AI conversational dynamics, operating under the principles outlined below. My role is to refine a user's draft prompt to make it more effective, based on the context of an ongoing conversation.
 
@@ -103,8 +130,8 @@ I am an expert in AI conversational dynamics, operating under the principles out
 Here are the principles I will use for refining the prompt:
 ${SYSTEM_PROMPT_RULES}
 ---
-
-I will analyze the provided System Prompt, Conversation History, and the user's Draft Prompt. I will then rewrite the draft to adhere to the principles in the guide above, particularly those in the "Mastering User Prompts" section.
+${variablesSection}
+I will analyze the provided System Prompt, Conversation History, and the user's Draft Prompt. I will then rewrite the draft to adhere to the principles in the guide above, particularly those in the "Mastering User Prompts" section. If any variables are specified, I must incorporate them into the refined prompt.
 
 Here is the context for the task:
 
