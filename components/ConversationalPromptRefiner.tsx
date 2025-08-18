@@ -5,7 +5,6 @@ import GlassCard from './GlassCard';
 import Button from './Button';
 import TextArea from './TextArea';
 import Loader from './Loader';
-import ModelSelector from './ModelSelector';
 import { CopyIcon, CheckIcon, PlusIcon, TrashIcon } from './Icon';
 
 type MessageRole = 'user' | 'assistant';
@@ -55,8 +54,11 @@ const RoleSelector: React.FC<{ role: MessageRole, onChange: (role: MessageRole) 
     );
 };
 
+interface ConversationalPromptRefinerProps {
+  modelName: string;
+}
 
-const ConversationalPromptRefiner: React.FC = () => {
+const ConversationalPromptRefiner: React.FC<ConversationalPromptRefinerProps> = ({ modelName }) => {
   const [systemPrompt, setSystemPrompt] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draftPrompt, setDraftPrompt] = useState('');
@@ -64,7 +66,6 @@ const ConversationalPromptRefiner: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const [model, setModel] = useState('gemini-2.5-flash');
 
   const addMessage = () => {
     setMessages([...messages, { id: Date.now(), role: 'user', content: '' }]);
@@ -98,14 +99,14 @@ const ConversationalPromptRefiner: React.FC = () => {
       .join('\n\n');
 
     try {
-      const result = await refineUserPrompt(systemPrompt, historyString, draftPrompt, model);
+      const result = await refineUserPrompt(systemPrompt, historyString, draftPrompt, modelName);
       setRefinedPrompt(result);
     } catch (e: any) {
         setError(e.message || 'An unknown error occurred.');
     } finally {
       setIsLoading(false);
     }
-  }, [systemPrompt, messages, draftPrompt, model]);
+  }, [systemPrompt, messages, draftPrompt, modelName]);
   
   const handleCopy = useCallback(() => {
     if (refinedPrompt) {
@@ -123,8 +124,6 @@ const ConversationalPromptRefiner: React.FC = () => {
           Provide conversation context and a draft prompt. We'll refine it for maximum effectiveness.
         </p>
         
-        <ModelSelector value={model} onChange={(e) => setModel(e.target.value)} />
-
         <TextArea
           id="system-prompt"
           placeholder="System Prompt (Optional)"

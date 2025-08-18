@@ -5,16 +5,18 @@ import GlassCard from './GlassCard';
 import Button from './Button';
 import TextArea from './TextArea';
 import Loader from './Loader';
-import ModelSelector from './ModelSelector';
 import { CopyIcon, CheckIcon } from './Icon';
 
-const SystemPromptArchitect: React.FC = () => {
+interface SystemPromptArchitectProps {
+  modelName: string;
+}
+
+const SystemPromptArchitect: React.FC<SystemPromptArchitectProps> = ({ modelName }) => {
   const [description, setDescription] = useState('');
   const [generatedPrompt, setGeneratedPrompt] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-  const [model, setModel] = useState('gemini-2.5-flash');
 
   const handleSubmit = useCallback(async () => {
     if (!description.trim()) {
@@ -25,14 +27,14 @@ const SystemPromptArchitect: React.FC = () => {
     setError(null);
     setGeneratedPrompt('');
     try {
-      const result = await generateSystemPrompt(description, model);
+      const result = await generateSystemPrompt(description, modelName);
       setGeneratedPrompt(result);
     } catch (e: any) {
       setError(e.message || 'An unknown error occurred.');
     } finally {
       setIsLoading(false);
     }
-  }, [description, model]);
+  }, [description, modelName]);
 
   const handleCopy = useCallback(() => {
     if (generatedPrompt) {
@@ -49,8 +51,6 @@ const SystemPromptArchitect: React.FC = () => {
         <p style={{ color: 'var(--text-color-secondary)' }}>
           Describe the desired AI persona. We'll engineer a high-performance system prompt for you.
         </p>
-        
-        <ModelSelector value={model} onChange={(e) => setModel(e.target.value)} />
         
         <TextArea
           id="persona-description"

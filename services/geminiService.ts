@@ -1,3 +1,9 @@
+
+import { GoogleGenAI } from "@google/genai";
+
+// As per guidelines, the API key is exclusively from process.env.API_KEY
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+
 // Cache for the fetched rules
 let systemPromptRules: string | null = null;
 
@@ -5,7 +11,6 @@ let systemPromptRules: string | null = null;
 async function getSystemPromptRules(): Promise<string> {
     if (systemPromptRules === null) {
         try {
-            // Path from root, assuming server serves from project root
             const response = await fetch('/prompts/systemPromptRules.txt');
             if (!response.ok) {
                 throw new Error(`Failed to fetch system prompt rules: ${response.statusText}`);
@@ -13,121 +18,38 @@ async function getSystemPromptRules(): Promise<string> {
             systemPromptRules = await response.text();
         } catch (error) {
             console.error('Error loading system prompt rules:', error);
-            // Re-throw a user-friendly error
             throw new Error('Could not load essential application configuration. Please check your network connection and refresh the page.');
         }
     }
     return systemPromptRules;
 }
 
-
-function getApiConfig() {
-  const apiKey = process.env.API_KEY || localStorage.getItem('gemini_api_key');
-  if (!apiKey) {
-    throw new Error("Gemini API key not found. Please set it in the API Configuration section.");
-  }
-
-  let baseUrl = localStorage.getItem('gemini_api_host') || 'https://generativelanguage.googleapis.com';
-  // Ensure protocol exists, default to https
-  if (!/^https?:\/\//i.test(baseUrl)) {
-    baseUrl = `https://${baseUrl}`;
-  }
-  // Remove any trailing slashes
-  baseUrl = baseUrl.replace(/\/$/, '');
-
-  return { apiKey, baseUrl };
-}
-
-
-interface GeminiModel {
-    name: string;
-    supportedGenerationMethods?: string[];
-}
-
-interface ListModelsResponse {
-    models?: GeminiModel[];
-}
-
-
 export const listAvailableModels = async (): Promise<string[]> => {
-    const DEFAULT_MODEL = 'gemini-2.5-flash'; // Using a more current default model name
-    const apiKey = process.env.API_KEY || localStorage.getItem('gemini_api_key');
-
-    if (!apiKey) {
-        return [DEFAULT_MODEL];
-    }
-    
-    try {
-        const { apiKey, baseUrl } = getApiConfig();
-        const url = `${baseUrl}/v1beta/models?key=${apiKey}`;
-        
-        const response = await fetch(url);
-        if (!response.ok) {
-            console.error(`Failed to fetch models: ${response.status} ${response.statusText}`);
-            const errorBody = await response.text();
-            console.error('Error body:', errorBody);
-            return [DEFAULT_MODEL];
-        }
-
-        const data: ListModelsResponse = await response.json();
-
-        const models = data.models
-            ?.filter((m) => m.supportedGenerationMethods?.includes('generateContent'))
-            .map((m) => m.name.replace(/^models\//, ''))
-            .filter((name: string) => name.startsWith('gemini'));
-        
-        if (models && models.length > 0) {
-            const modelSet = new Set(models);
-            // Ensure the default model is always first if available
-            if (modelSet.has(DEFAULT_MODEL)) {
-                return [DEFAULT_MODEL, ...Array.from(modelSet).filter(m => m !== DEFAULT_MODEL)];
-            }
-             // If default model isn't in the list, add it to the front anyway
-            return [DEFAULT_MODEL, ...Array.from(modelSet)];
-        }
-
-        return [DEFAULT_MODEL];
-    } catch (error) {
-        console.error("Error fetching models:", error);
-        return [DEFAULT_MODEL];
-    }
+    // Per guidelines, the primary text model for this app is 'gemini-2.5-flash'.
+    return ['gemini-2.5-flash'];
 };
 
-async function generateContent(model: string, masterPrompt: string): Promise<string> {
-    const { apiKey, baseUrl } = getApiConfig();
-    const url = `${baseUrl}/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
-    const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            contents: [{
-                parts: [{ text: masterPrompt }]
-            }]
-        })
-    });
-
-    if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: { message: 'Failed to parse error response from API.' } }));
-        console.error("API Error:", errorData);
-        const errorMessage = errorData?.error?.message || "An unknown API error occurred.";
-        if (errorMessage.toLowerCase().includes('api key') || errorMessage.toLowerCase().includes('permission denied')) {
-            throw new Error("The provided API Key is invalid or expired. Please check it in the API Configuration section.");
+async function generateContent(masterPrompt: string, model: string): Promise<string> {
+    if (!process.env.API_KEY) {
+        throw new Error("API_KEY environment variable not set. This is a required configuration for the application to function.");
+    }
+    try {
+        const response = await ai.models.generateContent({
+            model: model,
+            contents: masterPrompt,
+        });
+        return response.text;
+    } catch (error: any) {
+        console.error("Gemini API Error:", error);
+        if (error.message.toLowerCase().includes('api key not valid')) {
+            throw new Error("The API Key from the environment is invalid or expired.");
         }
-        throw new Error(errorMessage);
+        if (error.message.toLowerCase().includes('permission denied')) {
+            throw new Error("The configured API Key is valid, but may not have permission for the specified model.");
+        }
+        throw new Error(error.message || "An unknown API error occurred.");
     }
-    
-    const data = await response.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    
-    if (typeof text !== 'string') {
-        console.error("Unexpected response format:", data);
-        throw new Error("Unexpected response format from API.");
-    }
-    
-    return text.trim();
 }
 
 export const generateSystemPrompt = async (description: string, model: string): Promise<string> => {
@@ -145,11 +67,20 @@ User's Description:
 ${description}
 ---
 
-Generated System Prompt:
+Based on the user's description and the rules, generate the System Prompt.
+
+**Output Instructions:**
+- You must generate ONLY the text of the System Prompt itself.
+- Do NOT include any introductory phrases, explanations, or markdown formatting like \`\`\`.
+- The output should be ready to be directly copied and used as a system prompt.
+
+System Prompt:
   `;
 
   try {
-    return await generateContent(model, masterPrompt);
+    const result = await generateContent(masterPrompt, model);
+    // Defensively remove any markdown fences the model might still add
+    return result.replace(/```/g, '').trim();
   } catch (error: any) {
     console.error("Error generating system prompt:", error);
     throw error;
@@ -185,11 +116,21 @@ ${history || "No conversation history provided."}
 ${draftPrompt}
 
 ---
-Refined User Prompt:
+
+Based on the context, refine the user's draft prompt.
+
+**Output Instructions:**
+- You must generate ONLY the text of the refined prompt itself.
+- Do NOT include any introductory phrases, explanations, or markdown formatting like \`\`\`.
+- The output should be ready to be directly copied and used as a user prompt.
+
+Refined Prompt:
     `;
 
     try {
-        return await generateContent(model, masterPrompt);
+        const result = await generateContent(masterPrompt, model);
+        // Defensively remove any markdown fences the model might still add
+        return result.replace(/```/g, '').trim();
     } catch (error: any) {
         console.error("Error refining user prompt:", error);
         throw error;
