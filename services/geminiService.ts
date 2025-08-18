@@ -1,4 +1,25 @@
-import { SYSTEM_PROMPT_RULES } from "../prompts/systemPromptRules";
+// Cache for the fetched rules
+let systemPromptRules: string | null = null;
+
+// Asynchronously fetch and cache the system prompt rules
+async function getSystemPromptRules(): Promise<string> {
+    if (systemPromptRules === null) {
+        try {
+            // Path from root, assuming server serves from project root
+            const response = await fetch('/prompts/systemPromptRules.txt');
+            if (!response.ok) {
+                throw new Error(`Failed to fetch system prompt rules: ${response.statusText}`);
+            }
+            systemPromptRules = await response.text();
+        } catch (error) {
+            console.error('Error loading system prompt rules:', error);
+            // Re-throw a user-friendly error
+            throw new Error('Could not load essential application configuration. Please check your network connection and refresh the page.');
+        }
+    }
+    return systemPromptRules;
+}
+
 
 function getApiConfig() {
   const apiKey = process.env.API_KEY || localStorage.getItem('gemini_api_key');
@@ -29,7 +50,7 @@ interface ListModelsResponse {
 
 
 export const listAvailableModels = async (): Promise<string[]> => {
-    const DEFAULT_MODEL = 'gemini-2.5-flash';
+    const DEFAULT_MODEL = 'gemini-2.5-flash'; // Using a more current default model name
     const apiKey = process.env.API_KEY || localStorage.getItem('gemini_api_key');
 
     if (!apiKey) {
@@ -57,10 +78,12 @@ export const listAvailableModels = async (): Promise<string[]> => {
         
         if (models && models.length > 0) {
             const modelSet = new Set(models);
+            // Ensure the default model is always first if available
             if (modelSet.has(DEFAULT_MODEL)) {
                 return [DEFAULT_MODEL, ...Array.from(modelSet).filter(m => m !== DEFAULT_MODEL)];
             }
-            return Array.from(modelSet);
+             // If default model isn't in the list, add it to the front anyway
+            return [DEFAULT_MODEL, ...Array.from(modelSet)];
         }
 
         return [DEFAULT_MODEL];
@@ -108,6 +131,7 @@ async function generateContent(model: string, masterPrompt: string): Promise<str
 }
 
 export const generateSystemPrompt = async (description: string, model: string): Promise<string> => {
+  const SYSTEM_PROMPT_RULES = await getSystemPromptRules();
   const masterPrompt = `
 I am an expert in AI prompt engineering, specializing in crafting high-performance System Prompts. My task is to take a user's simple description of a desired AI persona and expand it into a formal, robust System Prompt.
 
@@ -138,6 +162,7 @@ export const refineUserPrompt = async (
   draftPrompt: string,
   model: string,
 ): Promise<string> => {
+    const SYSTEM_PROMPT_RULES = await getSystemPromptRules();
     const masterPrompt = `
 I am an expert in AI conversational dynamics, operating under the principles outlined below. My role is to refine a user's draft prompt to make it more effective, based on the context of an ongoing conversation.
 
