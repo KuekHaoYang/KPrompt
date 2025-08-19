@@ -1,13 +1,16 @@
+
 import React, { useState, useRef, useEffect } from 'react';
+import { UiLanguage, t } from '../services/translations';
 
 export type PromptType = 'system' | 'user';
 
 interface PromptTypeSelectorProps {
   promptType: PromptType;
   onChange: (promptType: PromptType) => void;
+  uiLang: UiLanguage;
 }
 
-const PromptTypeSelector: React.FC<PromptTypeSelectorProps> = ({ promptType, onChange }) => {
+const PromptTypeSelector: React.FC<PromptTypeSelectorProps> = ({ promptType, onChange, uiLang }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [indicatorStyle, setIndicatorStyle] = useState({});
     
@@ -36,10 +39,10 @@ const PromptTypeSelector: React.FC<PromptTypeSelectorProps> = ({ promptType, onC
                 aria-hidden="true"
             ></span>
             <button data-type="system" onClick={() => onChange('system')} className={`${baseClasses} rounded-full ${promptType === 'system' ? activeClasses : inactiveClasses}`} aria-label="Select System Prompt type">
-                System Prompt
+                {t('refiner.promptType.system', uiLang)}
             </button>
             <button data-type="user" onClick={() => onChange('user')} className={`${baseClasses} rounded-full ${promptType === 'user' ? activeClasses : inactiveClasses}`} aria-label="Select User Prompt type">
-                User Prompt
+                {t('refiner.promptType.user', uiLang)}
             </button>
         </div>
     );

@@ -6,14 +6,16 @@ import Button from './Button';
 import TextArea from './TextArea';
 import Loader from './Loader';
 import { CopyIcon, CheckIcon } from './Icon';
+import { UiLanguage, t } from '../services/translations';
 
 interface SystemPromptArchitectProps {
   modelName: string;
   language: string;
   variables: string[];
+  uiLang: UiLanguage;
 }
 
-const SystemPromptArchitect: React.FC<SystemPromptArchitectProps> = ({ modelName, language, variables }) => {
+const SystemPromptArchitect: React.FC<SystemPromptArchitectProps> = ({ modelName, language, variables, uiLang }) => {
   const [description, setDescription] = useState('');
   const [generatedPrompt, setGeneratedPrompt] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -22,7 +24,7 @@ const SystemPromptArchitect: React.FC<SystemPromptArchitectProps> = ({ modelName
 
   const handleSubmit = useCallback(async () => {
     if (!description.trim()) {
-      setError('Please enter a description for the AI persona.');
+      setError(t('error.enterDescription', uiLang));
       return;
     }
     setIsLoading(true);
@@ -32,11 +34,11 @@ const SystemPromptArchitect: React.FC<SystemPromptArchitectProps> = ({ modelName
       const result = await generateSystemPrompt(description, modelName, language, variables);
       setGeneratedPrompt(result);
     } catch (e: any) {
-      setError(e.message || 'An unknown error occurred.');
+      setError(e.message || t('error.unknown', uiLang));
     } finally {
       setIsLoading(false);
     }
-  }, [description, modelName, language, variables]);
+  }, [description, modelName, language, variables, uiLang]);
 
   const handleCopy = useCallback(() => {
     if (generatedPrompt) {
@@ -49,14 +51,14 @@ const SystemPromptArchitect: React.FC<SystemPromptArchitectProps> = ({ modelName
   return (
     <GlassCard>
       <div className="space-y-4">
-        <h2 className="text-2xl font-bold" style={{ color: 'var(--text-color)' }}>System Prompt Architect</h2>
+        <h2 className="text-2xl font-bold" style={{ color: 'var(--text-color)' }}>{t('architect.title', uiLang)}</h2>
         <p style={{ color: 'var(--text-color-secondary)' }}>
-          Describe the desired AI persona. We'll engineer a high-performance system prompt for you.
+          {t('architect.description', uiLang)}
         </p>
         
         <TextArea
           id="persona-description"
-          placeholder="e.g., 'a helpful code reviewer for Python' or 'a marketing expert for social media campaigns'"
+          placeholder={t('architect.placeholder', uiLang)}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           rows={4}
@@ -64,16 +66,16 @@ const SystemPromptArchitect: React.FC<SystemPromptArchitectProps> = ({ modelName
         />
         
         <Button onClick={handleSubmit} disabled={isLoading || !description.trim()}>
-          {isLoading ? <Loader /> : 'Generate Prompt'}
+          {isLoading ? <Loader /> : t('architect.button.generate', uiLang)}
         </Button>
         
         {error && <p className="text-red-500 text-sm mt-2 font-medium">{error}</p>}
         
         {generatedPrompt && (
           <div className="mt-6 space-y-3 fade-in">
-            <h3 className="text-xl font-semibold">Generated System Prompt:</h3>
+            <h3 className="text-xl font-semibold">{t('architect.generated.title', uiLang)}</h3>
             <div className="relative p-4 rounded-2xl" style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}>
-              <button onClick={handleCopy} className="absolute top-2 right-2 p-2 rounded-full transition hover:bg-[color:color-mix(in_srgb,var(--text-color)_10%,transparent)]" style={{ background: 'var(--glass-bg)', color: 'var(--text-color-secondary)' }} aria-label="Copy prompt">
+              <button onClick={handleCopy} className="absolute top-2 right-2 p-2 rounded-full transition hover:bg-[color:color-mix(in_srgb,var(--text-color)_10%,transparent)]" style={{ background: 'var(--glass-bg)', color: 'var(--text-color-secondary)' }} aria-label={t('common.copyPrompt', uiLang)}>
                 {copied ? <CheckIcon className="w-5 h-5 text-green-500" /> : <CopyIcon className="w-5 h-5" />}
               </button>
               <pre className="whitespace-pre-wrap break-words text-sm font-sans" style={{ color: 'var(--text-color)' }}>

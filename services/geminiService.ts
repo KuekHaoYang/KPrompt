@@ -1,8 +1,60 @@
-
 import { GoogleGenAI } from "@google/genai";
 
-// As per guidelines, the API key is exclusively from process.env.API_KEY
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
+let ai: GoogleGenAI | null = null;
+let currentApiKey: string | null = null;
+
+// This function determines the key to use, prioritizing user-set storage.
+function resolveApiKey(): string | null {
+    const storedKey = localStorage.getItem('gemini_api_key');
+    if (storedKey && storedKey.trim() !== '') {
+        return storedKey;
+    }
+    // Fallback to environment variable.
+    return process.env.API_KEY || null;
+}
+
+// Initializes or re-initializes the AI client.
+function initializeAiClient() {
+    const apiKey = resolveApiKey();
+    if (apiKey) {
+        // Only create a new instance if the key has actually changed.
+        if (apiKey !== currentApiKey) {
+            ai = new GoogleGenAI({ apiKey });
+            currentApiKey = apiKey;
+        }
+    } else {
+        ai = null;
+        currentApiKey = null;
+    }
+}
+
+// Initial call on load to set up the client.
+initializeAiClient();
+
+// Function for the UI to get the current key and its source for display.
+export function getApiKeyAndSource(): { key: string; source: 'storage' | 'env' | 'none' } {
+    const storedKey = localStorage.getItem('gemini_api_key');
+    if (storedKey && storedKey.trim() !== '') {
+        return { key: storedKey, source: 'storage' };
+    }
+    if (process.env.API_KEY) {
+        return { key: process.env.API_KEY, source: 'env' };
+    }
+    return { key: '', source: 'none' };
+}
+
+// Function for the UI to update the key.
+export function updateApiKey(newKey: string) {
+    if (newKey && newKey.trim() !== '') {
+        localStorage.setItem('gemini_api_key', newKey);
+    } else {
+        // If the user clears the key, remove it from storage to allow fallback to env var.
+        localStorage.removeItem('gemini_api_key');
+    }
+    // Re-initialize the client with the new key hierarchy.
+    initializeAiClient();
+}
+
 
 // Cache for the fetched rules
 let systemPromptRules: string | null = null;
@@ -31,9 +83,13 @@ export const listAvailableModels = async (): Promise<string[]> => {
 
 
 async function generateContent(masterPrompt: string, model: string): Promise<string> {
-    if (!process.env.API_KEY) {
-        throw new Error("API_KEY environment variable not set. This is a required configuration for the application to function.");
+    // Ensure client is up-to-date on every call. This is robust.
+    initializeAiClient();
+    
+    if (!ai) {
+        throw new Error("API Key not found. Please set your Google Gemini API Key in the settings.");
     }
+
     try {
         const response = await ai.models.generateContent({
             model: model,
@@ -43,10 +99,10 @@ async function generateContent(masterPrompt: string, model: string): Promise<str
     } catch (error: any) {
         console.error("Gemini API Error:", error);
         if (error.message.toLowerCase().includes('api key not valid')) {
-            throw new Error("The API Key from the environment is invalid or expired.");
+            throw new Error("The provided API Key is invalid or expired. Please check it in the settings.");
         }
         if (error.message.toLowerCase().includes('permission denied')) {
-            throw new Error("The configured API Key is valid, but may not have permission for the specified model.");
+            throw new Error("The API Key may not have permission for the specified model.");
         }
         throw new Error(error.message || "An unknown API error occurred.");
     }

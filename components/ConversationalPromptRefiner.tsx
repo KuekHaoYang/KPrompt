@@ -6,6 +6,7 @@ import Button from './Button';
 import TextArea from './TextArea';
 import Loader from './Loader';
 import { CopyIcon, CheckIcon, PlusIcon, TrashIcon } from './Icon';
+import { UiLanguage, t } from '../services/translations';
 
 type MessageRole = 'user' | 'assistant';
 
@@ -16,7 +17,7 @@ interface ChatMessage {
   isDeleting?: boolean;
 }
 
-const RoleSelector: React.FC<{ role: MessageRole, onChange: (role: MessageRole) => void }> = ({ role, onChange }) => {
+const RoleSelector: React.FC<{ role: MessageRole, onChange: (role: MessageRole) => void, uiLang: UiLanguage }> = ({ role, onChange, uiLang }) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [indicatorStyle, setIndicatorStyle] = useState({});
     
@@ -45,10 +46,10 @@ const RoleSelector: React.FC<{ role: MessageRole, onChange: (role: MessageRole) 
                 aria-hidden="true"
             ></span>
             <button data-role="user" onClick={() => onChange('user')} className={`${baseClasses} rounded-full ${role === 'user' ? activeClasses : inactiveClasses}`}>
-                User
+                {t('refiner.conversational.history.user', uiLang)}
             </button>
             <button data-role="assistant" onClick={() => onChange('assistant')} className={`${baseClasses} rounded-full ${role === 'assistant' ? activeClasses : inactiveClasses}`}>
-                AI
+                {t('refiner.conversational.history.ai', uiLang)}
             </button>
         </div>
     );
@@ -58,9 +59,10 @@ interface ConversationalPromptRefinerProps {
   modelName: string;
   language: string;
   variables: string[];
+  uiLang: UiLanguage;
 }
 
-const ConversationalPromptRefiner: React.FC<ConversationalPromptRefinerProps> = ({ modelName, language, variables }) => {
+const ConversationalPromptRefiner: React.FC<ConversationalPromptRefinerProps> = ({ modelName, language, variables, uiLang }) => {
   const [systemPrompt, setSystemPrompt] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draftPrompt, setDraftPrompt] = useState('');
@@ -89,7 +91,7 @@ const ConversationalPromptRefiner: React.FC<ConversationalPromptRefinerProps> = 
 
   const handleSubmit = useCallback(async () => {
     if (!draftPrompt.trim()) {
-      setError('Please enter a draft prompt to refine.');
+      setError(t('error.enterDraftPrompt', uiLang));
       return;
     }
     setIsLoading(true);
@@ -104,11 +106,11 @@ const ConversationalPromptRefiner: React.FC<ConversationalPromptRefinerProps> = 
       const result = await refineUserPrompt(systemPrompt, historyString, draftPrompt, modelName, language, variables);
       setRefinedPrompt(result);
     } catch (e: any) {
-        setError(e.message || 'An unknown error occurred.');
+        setError(e.message || t('error.unknown', uiLang));
     } finally {
       setIsLoading(false);
     }
-  }, [systemPrompt, messages, draftPrompt, modelName, language, variables]);
+  }, [systemPrompt, messages, draftPrompt, modelName, language, variables, uiLang]);
   
   const handleCopy = useCallback(() => {
     if (refinedPrompt) {
@@ -121,14 +123,14 @@ const ConversationalPromptRefiner: React.FC<ConversationalPromptRefinerProps> = 
   return (
     <GlassCard>
       <div className="space-y-4">
-        <h2 className="text-2xl font-bold" style={{ color: 'var(--text-color)' }}>Conversational Prompt Refiner</h2>
+        <h2 className="text-2xl font-bold" style={{ color: 'var(--text-color)' }}>{t('refiner.conversational.title', uiLang)}</h2>
         <p style={{ color: 'var(--text-color-secondary)' }}>
-          Provide conversation context and a draft prompt. We'll refine it for maximum effectiveness.
+          {t('refiner.conversational.description', uiLang)}
         </p>
         
         <TextArea
           id="system-prompt"
-          placeholder="System Prompt (Optional)"
+          placeholder={t('refiner.conversational.systemPrompt.placeholder', uiLang)}
           value={systemPrompt}
           onChange={(e) => setSystemPrompt(e.target.value)}
           rows={3}
@@ -136,7 +138,7 @@ const ConversationalPromptRefiner: React.FC<ConversationalPromptRefinerProps> = 
         />
 
         <div>
-          <h3 className="text-lg font-semibold mb-2" style={{color: 'var(--text-color-secondary)'}}>Conversation History</h3>
+          <h3 className="text-lg font-semibold mb-2" style={{color: 'var(--text-color-secondary)'}}>{t('refiner.conversational.history.title', uiLang)}</h3>
           <div className="space-y-4">
             {messages.map((msg) => (
               <div 
@@ -145,14 +147,14 @@ const ConversationalPromptRefiner: React.FC<ConversationalPromptRefinerProps> = 
                 style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}
               >
                 <div className="flex justify-between items-center">
-                  <RoleSelector role={msg.role} onChange={(role) => updateMessage(msg.id, 'role', role)} />
+                  <RoleSelector role={msg.role} onChange={(role) => updateMessage(msg.id, 'role', role)} uiLang={uiLang} />
                   <button onClick={() => removeMessage(msg.id)} className="p-2 rounded-full text-[color:var(--text-color-secondary)] hover:bg-[color:color-mix(in_srgb,var(--text-color)_10%,transparent)] hover:text-red-500 transition-colors">
                     <TrashIcon className="w-5 h-5" />
                   </button>
                 </div>
                 <TextArea
                   id={`message-${msg.id}`}
-                  placeholder={`Content for ${msg.role}...`}
+                  placeholder={t('refiner.conversational.history.contentPlaceholder', uiLang, {role: msg.role})}
                   value={msg.content}
                   onChange={(e) => updateMessage(msg.id, 'content', e.target.value)}
                   rows={2}
@@ -163,14 +165,14 @@ const ConversationalPromptRefiner: React.FC<ConversationalPromptRefinerProps> = 
             ))}
             <button onClick={addMessage} className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-full border transition-colors hover:bg-[color:color-mix(in_srgb,var(--text-color)_10%,transparent)]" style={{color: 'var(--text-color-secondary)', borderColor: 'var(--glass-border)'}}>
               <PlusIcon className="w-4 h-4" />
-              Add Message
+              {t('refiner.conversational.history.add', uiLang)}
             </button>
           </div>
         </div>
 
         <TextArea
           id="draft-prompt"
-          placeholder="Your Next User Prompt (Required)"
+          placeholder={t('refiner.conversational.draft.placeholder', uiLang)}
           value={draftPrompt}
           onChange={(e) => setDraftPrompt(e.target.value)}
           rows={3}
@@ -178,16 +180,16 @@ const ConversationalPromptRefiner: React.FC<ConversationalPromptRefinerProps> = 
         />
         
         <Button onClick={handleSubmit} disabled={isLoading || !draftPrompt.trim()}>
-          {isLoading ? <Loader /> : 'Refine Prompt'}
+          {isLoading ? <Loader /> : t('refiner.conversational.button.refine', uiLang)}
         </Button>
         
         {error && <p className="text-red-500 text-sm mt-2 font-medium">{error}</p>}
         
         {refinedPrompt && (
           <div className="mt-6 space-y-3 fade-in">
-            <h3 className="text-xl font-semibold">Refined User Prompt:</h3>
+            <h3 className="text-xl font-semibold">{t('refiner.conversational.refined.title', uiLang)}</h3>
             <div className="relative p-4 rounded-2xl" style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}>
-               <button onClick={handleCopy} className="absolute top-2 right-2 p-2 rounded-full transition hover:bg-[color:color-mix(in_srgb,var(--text-color)_10%,transparent)]" style={{ background: 'var(--glass-bg)', color: 'var(--text-color-secondary)' }} aria-label="Copy prompt">
+               <button onClick={handleCopy} className="absolute top-2 right-2 p-2 rounded-full transition hover:bg-[color:color-mix(in_srgb,var(--text-color)_10%,transparent)]" style={{ background: 'var(--glass-bg)', color: 'var(--text-color-secondary)' }} aria-label={t('common.copyPrompt', uiLang)}>
                 {copied ? <CheckIcon className="w-5 h-5 text-green-500" /> : <CopyIcon className="w-5 h-5" />}
               </button>
               <pre className="whitespace-pre-wrap break-words text-sm font-sans" style={{ color: 'var(--text-color)' }}>

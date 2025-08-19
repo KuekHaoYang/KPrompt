@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from 'react';
 import { refineSystemPrompt, refineUserPrompt } from '../services/geminiService';
 import GlassCard from './GlassCard';
@@ -6,14 +7,17 @@ import TextArea from './TextArea';
 import Loader from './Loader';
 import { CopyIcon, CheckIcon } from './Icon';
 import PromptTypeSelector, { PromptType } from './PromptTypeSelector';
+import { UiLanguage, t } from '../services/translations';
+
 
 interface SystemPromptRefinerProps {
   modelName: string;
   language: string;
   variables: string[];
+  uiLang: UiLanguage;
 }
 
-const SystemPromptRefiner: React.FC<SystemPromptRefinerProps> = ({ modelName, language, variables }) => {
+const SystemPromptRefiner: React.FC<SystemPromptRefinerProps> = ({ modelName, language, variables, uiLang }) => {
   const [promptType, setPromptType] = useState<PromptType>('system');
   const [existingPrompt, setExistingPrompt] = useState('');
   const [refinedPrompt, setRefinedPrompt] = useState('');
@@ -23,7 +27,7 @@ const SystemPromptRefiner: React.FC<SystemPromptRefinerProps> = ({ modelName, la
 
   const handleSubmit = useCallback(async () => {
     if (!existingPrompt.trim()) {
-      setError(`Please enter an existing ${promptType} prompt to refine.`);
+      setError(t('error.enterPromptToRefine', uiLang, { promptType }));
       return;
     }
     setIsLoading(true);
@@ -39,11 +43,11 @@ const SystemPromptRefiner: React.FC<SystemPromptRefinerProps> = ({ modelName, la
       }
       setRefinedPrompt(result);
     } catch (e: any) {
-      setError(e.message || 'An unknown error occurred.');
+      setError(e.message || t('error.unknown', uiLang));
     } finally {
       setIsLoading(false);
     }
-  }, [existingPrompt, modelName, language, variables, promptType]);
+  }, [existingPrompt, modelName, language, variables, promptType, uiLang]);
 
   const handleCopy = useCallback(() => {
     if (refinedPrompt) {
@@ -53,14 +57,12 @@ const SystemPromptRefiner: React.FC<SystemPromptRefinerProps> = ({ modelName, la
     }
   }, [refinedPrompt]);
 
-  const titleText = promptType === 'system' ? 'System Prompt Refiner' : 'User Prompt Refiner';
-  const descriptionText = promptType === 'system' 
-    ? "Input an existing system prompt. We'll optimize it for clarity, structure, and performance."
-    : "Input an existing user prompt. We'll refine it for clarity, intent, and effectiveness.";
-  const placeholderText = promptType === 'system'
-    ? "Paste your existing system prompt here..."
-    : "Paste your existing user prompt here...";
-  const buttonText = promptType === 'system' ? 'Refine System Prompt' : 'Refine User Prompt';
+  const titleText = t(promptType === 'system' ? 'refiner.system.title' : 'refiner.user.title', uiLang);
+  const descriptionText = t(promptType === 'system' ? 'refiner.system.description' : 'refiner.user.description', uiLang);
+  const placeholderText = t(promptType === 'system' ? 'refiner.system.placeholder' : 'refiner.user.placeholder', uiLang);
+  const buttonText = t(promptType === 'system' ? 'refiner.system.button' : 'refiner.user.button', uiLang);
+  const refinedTitle = t('refiner.refined.title', uiLang, { promptType: t(promptType === 'system' ? 'refiner.promptType.system' : 'refiner.promptType.user', uiLang) });
+
 
   return (
     <GlassCard>
@@ -72,9 +74,9 @@ const SystemPromptRefiner: React.FC<SystemPromptRefinerProps> = ({ modelName, la
 
         <div className="space-y-3">
           <label className="block text-sm font-medium" style={{color: 'var(--text-color-secondary)'}}>
-            Prompt Type
+            {t('refiner.promptType', uiLang)}
           </label>
-          <PromptTypeSelector promptType={promptType} onChange={setPromptType} />
+          <PromptTypeSelector promptType={promptType} onChange={setPromptType} uiLang={uiLang} />
         </div>
         
         <TextArea
@@ -94,9 +96,9 @@ const SystemPromptRefiner: React.FC<SystemPromptRefinerProps> = ({ modelName, la
         
         {refinedPrompt && (
           <div className="mt-6 space-y-3 fade-in">
-            <h3 className="text-xl font-semibold">Refined {promptType === 'system' ? 'System' : 'User'} Prompt:</h3>
+            <h3 className="text-xl font-semibold">{refinedTitle}</h3>
             <div className="relative p-4 rounded-2xl" style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}>
-              <button onClick={handleCopy} className="absolute top-2 right-2 p-2 rounded-full transition hover:bg-[color:color-mix(in_srgb,var(--text-color)_10%,transparent)]" style={{ background: 'var(--glass-bg)', color: 'var(--text-color-secondary)' }} aria-label="Copy refined prompt">
+              <button onClick={handleCopy} className="absolute top-2 right-2 p-2 rounded-full transition hover:bg-[color:color-mix(in_srgb,var(--text-color)_10%,transparent)]" style={{ background: 'var(--glass-bg)', color: 'var(--text-color-secondary)' }} aria-label={t('common.copyPrompt', uiLang)}>
                 {copied ? <CheckIcon className="w-5 h-5 text-green-500" /> : <CopyIcon className="w-5 h-5" />}
               </button>
               <pre className="whitespace-pre-wrap break-words text-sm font-sans" style={{ color: 'var(--text-color)' }}>

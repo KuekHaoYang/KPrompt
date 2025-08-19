@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback } from 'react';
 import { getOptimizationAdvice, applyOptimizationAdvice } from '../services/geminiService';
 import GlassCard from './GlassCard';
@@ -6,6 +5,7 @@ import Button from './Button';
 import TextArea from './TextArea';
 import Loader from './Loader';
 import { CopyIcon, CheckIcon, SparklesIcon } from './Icon';
+import { UiLanguage, t } from '../services/translations';
 
 type PromptType = 'system' | 'user';
 
@@ -13,13 +13,13 @@ interface OptimizationAdvisorProps {
   modelName: string;
   language: string;
   variables: string[];
+  uiLang: UiLanguage;
 }
 
 interface AdviceSectionProps {
   title: string;
   promptType: PromptType;
   advice: string[];
-  originalPrompt: string;
   onCopyAdvice: (type: PromptType) => void;
   onApplyAdvice: (type: PromptType) => void;
   isRefining: boolean;
@@ -27,11 +27,12 @@ interface AdviceSectionProps {
   onCopyRefined: (type: PromptType) => void;
   copiedAdvice: boolean;
   copiedRefined: boolean;
+  uiLang: UiLanguage;
 }
 
 const AdviceSection: React.FC<AdviceSectionProps> = ({
   title, promptType, advice, onCopyAdvice, onApplyAdvice, isRefining,
-  refinedPrompt, onCopyRefined, copiedAdvice, copiedRefined
+  refinedPrompt, onCopyRefined, copiedAdvice, copiedRefined, uiLang
 }) => (
   <div className="mt-6 space-y-3 fade-in pt-6 border-t" style={{ borderColor: 'var(--glass-border)' }}>
     <div className="flex justify-between items-center">
@@ -43,7 +44,7 @@ const AdviceSection: React.FC<AdviceSectionProps> = ({
         aria-label={`Copy ${promptType} prompt suggestions`}
       >
         {copiedAdvice ? <CheckIcon className="w-4 h-4 text-green-500" /> : <CopyIcon className="w-4 h-4" />}
-        {copiedAdvice ? 'Copied' : 'Copy Suggestions'}
+        {copiedAdvice ? t('common.copied', uiLang) : t('optimizer.suggestions.copy', uiLang)}
       </button>
     </div>
     <div className="p-4 rounded-2xl" style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}>
@@ -54,13 +55,13 @@ const AdviceSection: React.FC<AdviceSectionProps> = ({
     <Button onClick={() => onApplyAdvice(promptType)} disabled={isRefining}>
       {isRefining
         ? <Loader />
-        : <div className="flex items-center gap-2"><SparklesIcon className="w-5 h-5" /> Apply Advice & Refine</div>
+        : <div className="flex items-center gap-2"><SparklesIcon className="w-5 h-5" /> {t('optimizer.button.apply', uiLang)}</div>
       }
     </Button>
 
     {refinedPrompt && (
       <div className="mt-4 space-y-3 fade-in">
-        <h4 className="text-lg font-semibold">Refined {promptType === 'system' ? 'System' : 'User'} Prompt:</h4>
+        <h4 className="text-lg font-semibold">{promptType === 'system' ? t('optimizer.refined.title.system', uiLang) : t('optimizer.refined.title.user', uiLang)}</h4>
         <div className="relative p-4 rounded-2xl" style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}>
           <button onClick={() => onCopyRefined(promptType)} className="absolute top-2 right-2 p-2 rounded-full transition hover:bg-[color:color-mix(in_srgb,var(--text-color)_10%,transparent)]" style={{ background: 'var(--glass-bg)', color: 'var(--text-color-secondary)' }} aria-label={`Copy refined ${promptType} prompt`}>
             {copiedRefined ? <CheckIcon className="w-5 h-5 text-green-500" /> : <CopyIcon className="w-5 h-5" />}
@@ -75,7 +76,7 @@ const AdviceSection: React.FC<AdviceSectionProps> = ({
 );
 
 
-const OptimizationAdvisor: React.FC<OptimizationAdvisorProps> = ({ modelName, language, variables }) => {
+const OptimizationAdvisor: React.FC<OptimizationAdvisorProps> = ({ modelName, language, variables, uiLang }) => {
   const [systemPrompt, setSystemPrompt] = useState('');
   const [userPrompt, setUserPrompt] = useState('');
   const [advice, setAdvice] = useState<{ system: string[]; user: string[] } | null>(null);
@@ -88,7 +89,7 @@ const OptimizationAdvisor: React.FC<OptimizationAdvisorProps> = ({ modelName, la
 
   const handleGetAdvice = useCallback(async () => {
     if (!systemPrompt.trim() && !userPrompt.trim()) {
-      setError('Please enter at least one prompt to get advice on.');
+      setError(t('error.enterOnePrompt', uiLang));
       return;
     }
     setIsLoading(true);
@@ -120,11 +121,11 @@ const OptimizationAdvisor: React.FC<OptimizationAdvisorProps> = ({ modelName, la
 
       setAdvice(newAdvice);
     } catch (e: any) {
-      setError(e.message || 'An unknown error occurred.');
+      setError(e.message || t('error.unknown', uiLang));
     } finally {
       setIsLoading(false);
     }
-  }, [systemPrompt, userPrompt, modelName, language, variables]);
+  }, [systemPrompt, userPrompt, modelName, language, variables, uiLang]);
 
   const handleApplyAdvice = useCallback(async (type: PromptType) => {
     if (!advice) return;
@@ -140,12 +141,13 @@ const OptimizationAdvisor: React.FC<OptimizationAdvisorProps> = ({ modelName, la
     try {
       const result = await applyOptimizationAdvice(originalPrompt, adviceToApply, type, modelName, language, variables);
       setRefinedPrompts(prev => ({ ...prev, [type]: result }));
-    } catch (e: any) {
-      setError(e.message || 'An unknown error occurred.');
+    } catch (e: any)
+{
+      setError(e.message || t('error.unknown', uiLang));
     } finally {
       setIsRefining(null);
     }
-  }, [systemPrompt, userPrompt, advice, modelName, language, variables]);
+  }, [systemPrompt, userPrompt, advice, modelName, language, variables, uiLang]);
 
   const handleCopyAdvice = useCallback((type: PromptType) => {
     if (!advice) return;
@@ -168,15 +170,15 @@ const OptimizationAdvisor: React.FC<OptimizationAdvisorProps> = ({ modelName, la
   return (
     <GlassCard>
       <div className="space-y-4">
-        <h2 className="text-2xl font-bold" style={{ color: 'var(--text-color)' }}>Prompt Optimizer</h2>
+        <h2 className="text-2xl font-bold" style={{ color: 'var(--text-color)' }}>{t('optimizer.title', uiLang)}</h2>
         <p style={{ color: 'var(--text-color-secondary)' }}>
-          Provide a system and/or user prompt to receive expert advice and generate refined versions.
+          {t('optimizer.description', uiLang)}
         </p>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <TextArea
             id="system-prompt-to-analyze"
-            placeholder="System Prompt (Optional)"
+            placeholder={t('optimizer.systemPrompt.placeholder', uiLang)}
             value={systemPrompt}
             onChange={(e) => setSystemPrompt(e.target.value)}
             rows={5}
@@ -184,7 +186,7 @@ const OptimizationAdvisor: React.FC<OptimizationAdvisorProps> = ({ modelName, la
           />
           <TextArea
             id="user-prompt-to-analyze"
-            placeholder="User Prompt (Optional)"
+            placeholder={t('optimizer.userPrompt.placeholder', uiLang)}
             value={userPrompt}
             onChange={(e) => setUserPrompt(e.target.value)}
             rows={5}
@@ -193,7 +195,7 @@ const OptimizationAdvisor: React.FC<OptimizationAdvisorProps> = ({ modelName, la
         </div>
         
         <Button onClick={handleGetAdvice} disabled={isLoading || !!isRefining || (!systemPrompt.trim() && !userPrompt.trim())}>
-          {isLoading ? <Loader /> : 'Get Advice'}
+          {isLoading ? <Loader /> : t('optimizer.button.getAdvice', uiLang)}
         </Button>
         
         {error && <p className="text-red-500 text-sm mt-2 font-medium">{error}</p>}
@@ -202,10 +204,9 @@ const OptimizationAdvisor: React.FC<OptimizationAdvisorProps> = ({ modelName, la
           <div>
             {advice.system.length > 0 && (
               <AdviceSection 
-                title="System Prompt Suggestions"
+                title={t('optimizer.suggestions.system', uiLang)}
                 promptType="system"
                 advice={advice.system}
-                originalPrompt={systemPrompt}
                 onCopyAdvice={handleCopyAdvice}
                 onApplyAdvice={handleApplyAdvice}
                 isRefining={isRefining === 'system'}
@@ -213,14 +214,14 @@ const OptimizationAdvisor: React.FC<OptimizationAdvisorProps> = ({ modelName, la
                 onCopyRefined={handleCopyRefined}
                 copiedAdvice={copiedAdvice === 'system'}
                 copiedRefined={copiedRefined === 'system'}
+                uiLang={uiLang}
               />
             )}
             {advice.user.length > 0 && (
                <AdviceSection 
-                title="User Prompt Suggestions"
+                title={t('optimizer.suggestions.user', uiLang)}
                 promptType="user"
                 advice={advice.user}
-                originalPrompt={userPrompt}
                 onCopyAdvice={handleCopyAdvice}
                 onApplyAdvice={handleApplyAdvice}
                 isRefining={isRefining === 'user'}
@@ -228,6 +229,7 @@ const OptimizationAdvisor: React.FC<OptimizationAdvisorProps> = ({ modelName, la
                 onCopyRefined={handleCopyRefined}
                 copiedAdvice={copiedAdvice === 'user'}
                 copiedRefined={copiedRefined === 'user'}
+                uiLang={uiLang}
               />
             )}
           </div>

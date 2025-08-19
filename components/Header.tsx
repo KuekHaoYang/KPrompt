@@ -1,8 +1,15 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { SunIcon, MoonIcon, ComputerDesktopIcon } from './Icon';
+import LanguageSwitcher from './LanguageSwitcher';
+import { UiLanguage, t } from '../services/translations';
 
 type Theme = 'light' | 'dark' | 'system';
+
+interface HeaderProps {
+    uiLang: UiLanguage;
+    onLangChange: (lang: UiLanguage) => void;
+}
 
 const ThemeSwitcher: React.FC = () => {
     const [theme, setTheme] = useState<Theme>('system');
@@ -61,17 +68,18 @@ const ThemeSwitcher: React.FC = () => {
 };
 
 
-const Header: React.FC = () => {
+const Header: React.FC<HeaderProps> = ({ uiLang, onLangChange }) => {
   return (
     <header className="text-center space-y-4">
       <h1 className="text-4xl sm:text-5xl font-bold tracking-tight" style={{ color: 'var(--text-color)' }}>
         KPrompt
       </h1>
       <p className="text-lg" style={{ color: 'var(--text-color-secondary)' }}>
-        AI Prompt Engineering Workbench
+        {t('header.subtitle', uiLang)}
       </p>
-      <div className="pt-2">
+      <div className="pt-2 flex justify-center items-center gap-4 flex-wrap">
         <ThemeSwitcher />
+        <LanguageSwitcher uiLang={uiLang} onLangChange={onLangChange} />
       </div>
     </header>
   );

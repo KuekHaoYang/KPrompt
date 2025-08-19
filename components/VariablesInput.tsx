@@ -1,13 +1,16 @@
+
 import React from 'react';
 import Input from './Input';
 import { PlusIcon, TrashIcon } from './Icon';
+import { UiLanguage, t } from '../services/translations';
 
 interface VariablesInputProps {
   variables: string[];
   onChange: (variables: string[]) => void;
+  uiLang: UiLanguage;
 }
 
-const VariablesInput: React.FC<VariablesInputProps> = ({ variables, onChange }) => {
+const VariablesInput: React.FC<VariablesInputProps> = ({ variables, onChange, uiLang }) => {
   const addVariable = () => {
     onChange([...variables, '']);
   };
@@ -26,7 +29,7 @@ const VariablesInput: React.FC<VariablesInputProps> = ({ variables, onChange }) 
   return (
     <div>
       <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-color-secondary)' }}>
-        Prompt Variables (Optional)
+        {t('config.variables', uiLang)}
       </label>
       <div className="space-y-3">
         {variables.map((variable, index) => (
@@ -36,7 +39,7 @@ const VariablesInput: React.FC<VariablesInputProps> = ({ variables, onChange }) 
               type="text"
               value={variable}
               onChange={(e) => updateVariable(index, e.target.value)}
-              placeholder="e.g., {{user_input}} or ${customer_name}"
+              placeholder={t('config.variables.placeholder', uiLang)}
               className="!p-3"
             />
             <button
@@ -54,11 +57,11 @@ const VariablesInput: React.FC<VariablesInputProps> = ({ variables, onChange }) 
           style={{ color: 'var(--text-color-secondary)', borderColor: 'var(--glass-border)' }}
         >
           <PlusIcon className="w-4 h-4" />
-          Add Variable
+          {t('config.variables.add', uiLang)}
         </button>
       </div>
        <p className="text-xs mt-2" style={{ color: 'var(--text-color-secondary)' }}>
-        Define placeholders the AI should include in the generated prompt, like {`\`{{user_input}}\``}.
+        {t('config.variables.description', uiLang)}
       </p>
     </div>
   );
