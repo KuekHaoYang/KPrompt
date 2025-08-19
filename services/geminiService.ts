@@ -130,24 +130,36 @@ For example, if a variable is \`{{user_topic}}\`, you might include a sentence l
     `;
 };
 
-export const generateSystemPrompt = async (description: string, model: string, language: string, variables: string[]): Promise<string> => {
+export const generateSystemPrompt = async (description: string, model: string, language: string, variables: string[], thinkingPoints?: string[]): Promise<string> => {
   const SYSTEM_PROMPT_RULES = await getSystemPromptRules();
   const variablesSection = formatVariablesForPrompt(variables);
+  const thinkingPointsSection = (thinkingPoints && thinkingPoints.length > 0 && thinkingPoints.some(p => p.trim() !== ''))
+    ? `
+---
+Key Directives to Incorporate:
+You must intelligently integrate the following specific directives into the final System Prompt. These are non-negotiable and should guide the core logic and personality of the AI.
+
+Directives:
+${thinkingPoints.filter(p => p.trim() !== '').map(p => `- ${p}`).join('\n')}
+---
+    `
+    : '';
 
   const masterPrompt = `
-I am an expert in AI prompt engineering, specializing in crafting high-performance System Prompts. My task is to take a user's simple description of a desired AI persona and expand it into a formal, robust System Prompt.
+I am an expert in AI prompt engineering, specializing in crafting high-performance System Prompts. My task is to take a user's simple description of a desired AI persona, along with a set of key directives, and expand it into a formal, robust System Prompt.
 
 ---
-Here are the rules I will follow:
+Here are the rules I will follow(THE GENERATED PROMPT MUST FULLY FOLLOW THIS RULES):
 ${SYSTEM_PROMPT_RULES}
 ---
 ${variablesSection}
-User's Description:
+${thinkingPointsSection}
+User's Original Description:
 ---
 ${description}
 ---
 
-Based on the user's description, the rules, and any specified variables, generate the System Prompt.
+You must strictly and completely adhere to all the rules provided. Based on the user's description, the key directives (if any), and any specified variables, generate the System Prompt.
 
 **Output Instructions:**
 - You must generate ONLY the text of the System Prompt itself.
@@ -183,7 +195,7 @@ export const refineUserPrompt = async (
 I am an expert in AI conversational dynamics, operating under the principles outlined below. My role is to refine a user's draft prompt to make it more effective, based on the context of an ongoing conversation.
 
 ---
-Here are the principles I will use for refining the prompt:
+Here are the principles I will use for refining the prompt (THE GENERATED PROMPT MUST FULLY FOLLOW THIS RULES):
 ${SYSTEM_PROMPT_RULES}
 ---
 ${variablesSection}
@@ -202,7 +214,7 @@ ${draftPrompt}
 
 ---
 
-Based on the context, refine the user's draft prompt.
+Based on the context, you must strictly and completely adhere to all the principles provided to refine the user's draft prompt.
 
 **Output Instructions:**
 - You must generate ONLY the text of the refined prompt itself.
@@ -231,7 +243,7 @@ export const refineSystemPrompt = async (existingPrompt: string, model: string, 
 I am an expert in AI prompt engineering, specializing in optimizing System Prompts for maximum performance. My task is to take a user's existing System Prompt and refine it to be more robust, clear, and effective, following the principles outlined below.
 
 ---
-Here are the principles I will follow for refining the prompt:
+Here are the principles I will follow for refining the prompt (THE GENERATED PROMPT MUST FULLY FOLLOW THIS RULES):
 ${SYSTEM_PROMPT_RULES}
 ---
 ${variablesSection}
@@ -242,7 +254,7 @@ User's Existing System Prompt:
 ${existingPrompt}
 ---
 
-Based on the user's prompt, the rules, and any specified variables, refine the System Prompt.
+Based on the user's prompt, you must strictly and completely adhere to all the rules provided and incorporate any specified variables to refine the System Prompt.
 
 **Output Instructions:**
 - You must generate ONLY the text of the refined System Prompt itself.
@@ -262,6 +274,50 @@ Refined System Prompt:
   }
 };
 
+export const getSystemPromptThinkingPoints = async (
+  description: string,
+  model: string,
+  language: string,
+  variables: string[]
+): Promise<string> => {
+  const SYSTEM_PROMPT_RULES = await getSystemPromptRules();
+  const variablesSection = formatVariablesForPrompt(variables);
+
+  const masterPrompt = `
+I am an expert prompt engineering advisor. My task is to analyze a user's description for an AI persona and provide a concise, actionable list of key points and characteristics that should be included in a high-performance System Prompt. I will base my suggestions on the principles of elite prompt engineering.
+
+---
+Here are the principles I will follow (THE GENERATED PROMPT MUST FULLY FOLLOW THIS RULES):
+${SYSTEM_PROMPT_RULES}
+---
+${variablesSection}
+User's Description for AI Persona:
+---
+${description}
+---
+
+Based on the provided description and the principles, you must generate a list of key points for the System Prompt.
+
+**CRITICAL Output Instructions:**
+- You must generate ONLY a concise, bulleted list of suggestions.
+- Each suggestion must be a brief, single point.
+- Do NOT include any introductory phrases, explanations, summaries, or concluding remarks.
+- The output should be a raw list of points, with each point on a new line, starting with a hyphen or asterisk.
+- **You must generate the output in ${language}.**
+
+Key Points for System Prompt:
+  `;
+
+  try {
+    const result = await generateContent(masterPrompt, model);
+    return result.replace(/```/g, '').trim();
+  } catch (error: any) {
+    console.error("Error getting system prompt thinking points:", error);
+    throw error;
+  }
+};
+
+
 export const getOptimizationAdvice = async (
   promptToAnalyze: string,
   promptType: 'system' | 'user',
@@ -276,7 +332,7 @@ export const getOptimizationAdvice = async (
 I am an expert prompt engineering advisor. My task is to analyze a given ${promptType} prompt and provide a concise, actionable list of suggestions for improvement, based on the principles outlined below.
 
 ---
-Here are the principles I will follow:
+Here are the principles I will follow (THE GENERATED PROMPT MUST FULLY FOLLOW THIS RULES):
 ${SYSTEM_PROMPT_RULES}
 ---
 ${variablesSection}
@@ -285,7 +341,7 @@ ${promptType.charAt(0).toUpperCase() + promptType.slice(1)} Prompt to Analyze:
 ${promptToAnalyze}
 ---
 
-Based on the provided prompt and the principles, generate a list of optimization suggestions.
+Based on the provided prompt and the principles, you must generate a list of optimization suggestions.
 
 **CRITICAL Output Instructions:**
 - You must generate ONLY a concise, bulleted list of suggestions.
@@ -322,7 +378,7 @@ export const applyOptimizationAdvice = async (
 I am an expert in AI prompt engineering, specializing in optimizing prompts for maximum performance. My task is to take a user's existing ${promptType} prompt, along with a list of specific optimization suggestions, and rewrite the prompt to incorporate that advice.
 
 ---
-Here are the core principles of elite prompt engineering I will follow:
+Here are the core principles of elite prompt engineering I will follow (THE GENERATED PROMPT MUST FULLY FOLLOW THIS RULES):
 ${SYSTEM_PROMPT_RULES}
 ---
 ${variablesSection}
@@ -338,7 +394,7 @@ Optimization Suggestions to Apply:
 ${adviceSection}
 ---
 
-Based on the original prompt, the suggestions, the core principles, and any specified variables, generate the new, refined prompt.
+Based on the original prompt, the suggestions, the core principles, and any specified variables, you must generate the new, refined prompt.
 
 **CRITICAL Output Instructions:**
 - You must generate ONLY the text of the new, refined prompt itself.

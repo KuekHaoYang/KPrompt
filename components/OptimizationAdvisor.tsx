@@ -20,6 +20,7 @@ interface AdviceSectionProps {
   title: string;
   promptType: PromptType;
   advice: string[];
+  onAdviceChange: (index: number, value: string) => void;
   onCopyAdvice: (type: PromptType) => void;
   onApplyAdvice: (type: PromptType) => void;
   isRefining: boolean;
@@ -31,7 +32,7 @@ interface AdviceSectionProps {
 }
 
 const AdviceSection: React.FC<AdviceSectionProps> = ({
-  title, promptType, advice, onCopyAdvice, onApplyAdvice, isRefining,
+  title, promptType, advice, onAdviceChange, onCopyAdvice, onApplyAdvice, isRefining,
   refinedPrompt, onCopyRefined, copiedAdvice, copiedRefined, uiLang
 }) => (
   <div className="mt-6 space-y-3 fade-in pt-6 border-t" style={{ borderColor: 'var(--glass-border)' }}>
@@ -47,10 +48,17 @@ const AdviceSection: React.FC<AdviceSectionProps> = ({
         {copiedAdvice ? t('common.copied', uiLang) : t('optimizer.suggestions.copy', uiLang)}
       </button>
     </div>
-    <div className="p-4 rounded-2xl" style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}>
-      <ul className="space-y-2 list-disc list-inside text-sm" style={{ color: 'var(--text-color)' }}>
-        {advice.map((point, index) => <li key={index}>{point}</li>)}
-      </ul>
+    <div className="p-4 rounded-2xl space-y-2" style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}>
+      {advice.map((point, index) => (
+        <TextArea 
+            id={`advice-${promptType}-${index}`}
+            key={index} 
+            value={point}
+            onChange={(e) => onAdviceChange(index, e.target.value)}
+            className="text-sm !p-3"
+            rows={2}
+        />
+      ))}
     </div>
     <Button onClick={() => onApplyAdvice(promptType)} disabled={isRefining}>
       {isRefining
@@ -165,6 +173,13 @@ const OptimizationAdvisor: React.FC<OptimizationAdvisorProps> = ({ modelName, la
       setTimeout(() => setCopiedRefined(null), 2000);
     }
   }, [refinedPrompts]);
+  
+  const handleAdviceChange = (type: PromptType, index: number, value: string) => {
+    if (!advice) return;
+    const newAdviceList = [...advice[type]];
+    newAdviceList[index] = value;
+    setAdvice({ ...advice, [type]: newAdviceList });
+  };
 
 
   return (
@@ -207,6 +222,7 @@ const OptimizationAdvisor: React.FC<OptimizationAdvisorProps> = ({ modelName, la
                 title={t('optimizer.suggestions.system', uiLang)}
                 promptType="system"
                 advice={advice.system}
+                onAdviceChange={(index, value) => handleAdviceChange('system', index, value)}
                 onCopyAdvice={handleCopyAdvice}
                 onApplyAdvice={handleApplyAdvice}
                 isRefining={isRefining === 'system'}
@@ -222,6 +238,7 @@ const OptimizationAdvisor: React.FC<OptimizationAdvisorProps> = ({ modelName, la
                 title={t('optimizer.suggestions.user', uiLang)}
                 promptType="user"
                 advice={advice.user}
+                onAdviceChange={(index, value) => handleAdviceChange('user', index, value)}
                 onCopyAdvice={handleCopyAdvice}
                 onApplyAdvice={handleApplyAdvice}
                 isRefining={isRefining === 'user'}
