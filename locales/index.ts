@@ -1,3 +1,4 @@
+
 // Zero-dependency, type-safe i18n solution for KPrompt
 // Supports English and Chinese (Simplified)
 
@@ -66,6 +67,11 @@ interface Translations {
     outputLanguageDescription: string;
     aiModelPlaceholder: string;
     outputLanguagePlaceholder: string;
+    apiKeyPlaceholder: string;
+    apiKeyTitle: string;
+    apiKeyDescription: string;
+    apiKeyRequired: string;
+    apiKeyFromEnv: string;
   };
   theme: {
     lightLabel: string;
@@ -143,7 +149,12 @@ const translations: Record<Locale, Translations> = {
       aiModelDescription: "Specify the model to use for all prompt generation tasks.",
       outputLanguageDescription: "Enter the language for the generated prompt output.",
       aiModelPlaceholder: "e.g., gemini-2.5-flash",
-      outputLanguagePlaceholder: "e.g., English, Spanish, Japanese"
+      outputLanguagePlaceholder: "e.g., English, Spanish, Japanese",
+      apiKeyPlaceholder: "Enter your Google Gemini API Key",
+      apiKeyTitle: "API Key Configuration",
+      apiKeyDescription: "Your API key is stored locally in your browser and is required for all AI interactions.",
+      apiKeyRequired: "An API key is required to use this application.",
+      apiKeyFromEnv: "API Key has been configured from the environment."
     },
     theme: {
       lightLabel: "Set light theme",
@@ -219,7 +230,12 @@ const translations: Record<Locale, Translations> = {
       aiModelDescription: "指定用于所有提示生成任务的模型。",
       outputLanguageDescription: "输入生成提示输出的语言。",
       aiModelPlaceholder: "例如：gemini-2.5-flash",
-      outputLanguagePlaceholder: "例如：中文，英文，日文"
+      outputLanguagePlaceholder: "例如：中文，英文，日文",
+      apiKeyPlaceholder: "输入您的 Google Gemini API 密钥",
+      apiKeyTitle: "API 密钥配置",
+      apiKeyDescription: "您的 API 密钥将安全地存储在您的浏览器本地存储中，并且是所有 AI 交互所必需的。",
+      apiKeyRequired: "使用此应用程序需要 API 密钥。",
+      apiKeyFromEnv: "API 密钥已通过环境配置。"
     },
     theme: {
       lightLabel: "设置浅色主题",

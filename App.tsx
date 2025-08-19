@@ -7,24 +7,57 @@ import Input from './components/Input';
 import VariablesInput from './components/VariablesInput';
 import OptimizationAdvisor from './components/OptimizationAdvisor';
 import { t } from './locales';
+import ApiKeyInput from './components/ApiKeyInput';
+import { initializeAi } from './services/geminiService';
 
 const App: React.FC = () => {
+  const [apiKey, setApiKey] = useState('');
+  const [isApiKeyFromEnv, setIsApiKeyFromEnv] = useState(false);
   const [modelName, setModelName] = useState('gemini-2.5-flash');
   const [uiLanguage, setUiLanguage] = useState('English'); // UI interface language
   const [outputLanguage, setOutputLanguage] = useState('English'); // AI output language
   const [variables, setVariables] = useState<string[]>([]);
 
-  // Initialize languages from localStorage on component mount
+  // Initialize API Key and languages from localStorage on component mount
   useEffect(() => {
     try {
+      // Check for environment variable first.
+      // This is a safe check that works even if `process` is not defined.
+      const envApiKey = (typeof process !== 'undefined' && process.env && process.env.API_KEY) || null;
+
+      if (envApiKey) {
+        setApiKey(envApiKey);
+        setIsApiKeyFromEnv(true);
+        initializeAi(envApiKey);
+      } else {
+        const savedApiKey = localStorage.getItem('kprompt.apiKey') || '';
+        setApiKey(savedApiKey);
+        initializeAi(savedApiKey);
+      }
+
       const savedUiLanguage = localStorage.getItem('kprompt.uiLanguage') || 'English';
       const savedOutputLanguage = localStorage.getItem('kprompt.outputLanguage') || 'English';
       setUiLanguage(savedUiLanguage);
       setOutputLanguage(savedOutputLanguage);
     } catch (error) {
-      console.warn('Failed to load language preferences from localStorage:', error);
+      console.warn('Failed to load preferences from localStorage:', error);
     }
   }, []);
+  
+  // Handle API key change with localStorage persistence
+  const handleApiKeyChange = useCallback((newKey: string) => {
+    // Do not allow changing the key if it's set from the environment
+    if (isApiKeyFromEnv) return;
+
+    const trimmedKey = newKey.trim();
+    setApiKey(trimmedKey);
+    initializeAi(trimmedKey);
+    try {
+      localStorage.setItem('kprompt.apiKey', trimmedKey);
+    } catch (error) {
+      console.warn('Failed to save API key to localStorage:', error);
+    }
+  }, [isApiKeyFromEnv]);
 
   // Handle UI language change with localStorage persistence
   const handleUiLanguageChange = useCallback((newLanguage: string) => {
@@ -55,6 +88,12 @@ const App: React.FC = () => {
       <Header language={uiLanguage} setLanguage={handleUiLanguageChange} t={translate} />
       <main className="container mx-auto mt-8">
         <div className="max-w-4xl mx-auto mb-10 space-y-8">
+            <ApiKeyInput 
+              apiKey={apiKey} 
+              onApiKeyChange={handleApiKeyChange} 
+              t={translate} 
+              isApiKeyFromEnv={isApiKeyFromEnv} 
+            />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
                   <label htmlFor="model-name" className="block text-sm font-medium mb-2" style={{color: 'var(--text-color-secondary)'}}>
