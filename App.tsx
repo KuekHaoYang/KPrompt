@@ -1,146 +1,69 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import SystemPromptArchitect from './components/SystemPromptArchitect';
 import ConversationalPromptRefiner from './components/ConversationalPromptRefiner';
 import Header from './components/Header';
 import Input from './components/Input';
 import VariablesInput from './components/VariablesInput';
 import OptimizationAdvisor from './components/OptimizationAdvisor';
-import { t } from './locales';
-import ApiKeyInput from './components/ApiKeyInput';
-import { initializeAi } from './services/geminiService';
 
 const App: React.FC = () => {
-  const [apiKey, setApiKey] = useState('');
-  const [isApiKeyFromEnv, setIsApiKeyFromEnv] = useState(false);
   const [modelName, setModelName] = useState('gemini-2.5-flash');
-  const [uiLanguage, setUiLanguage] = useState('English'); // UI interface language
-  const [outputLanguage, setOutputLanguage] = useState('English'); // AI output language
+  const [language, setLanguage] = useState('English');
   const [variables, setVariables] = useState<string[]>([]);
-
-  // Initialize API Key and languages from localStorage on component mount
-  useEffect(() => {
-    try {
-      // Check for environment variable first.
-      // This is a safe check that works even if `process` is not defined.
-      const envApiKey = (typeof process !== 'undefined' && process.env && process.env.API_KEY) || null;
-
-      if (envApiKey) {
-        setApiKey(envApiKey);
-        setIsApiKeyFromEnv(true);
-        initializeAi(envApiKey);
-      } else {
-        const savedApiKey = localStorage.getItem('kprompt.apiKey') || '';
-        setApiKey(savedApiKey);
-        initializeAi(savedApiKey);
-      }
-
-      const savedUiLanguage = localStorage.getItem('kprompt.uiLanguage') || 'English';
-      const savedOutputLanguage = localStorage.getItem('kprompt.outputLanguage') || 'English';
-      setUiLanguage(savedUiLanguage);
-      setOutputLanguage(savedOutputLanguage);
-    } catch (error) {
-      console.warn('Failed to load preferences from localStorage:', error);
-    }
-  }, []);
-  
-  // Handle API key change with localStorage persistence
-  const handleApiKeyChange = useCallback((newKey: string) => {
-    // Do not allow changing the key if it's set from the environment
-    if (isApiKeyFromEnv) return;
-
-    const trimmedKey = newKey.trim();
-    setApiKey(trimmedKey);
-    initializeAi(trimmedKey);
-    try {
-      localStorage.setItem('kprompt.apiKey', trimmedKey);
-    } catch (error) {
-      console.warn('Failed to save API key to localStorage:', error);
-    }
-  }, [isApiKeyFromEnv]);
-
-  // Handle UI language change with localStorage persistence
-  const handleUiLanguageChange = useCallback((newLanguage: string) => {
-    setUiLanguage(newLanguage);
-    try {
-      localStorage.setItem('kprompt.uiLanguage', newLanguage);
-    } catch (error) {
-      console.warn('Failed to save UI language to localStorage:', error);
-    }
-  }, []);
-
-  // Handle output language change with localStorage persistence
-  const handleOutputLanguageChange = useCallback((newLanguage: string) => {
-    setOutputLanguage(newLanguage);
-    try {
-      localStorage.setItem('kprompt.outputLanguage', newLanguage);
-    } catch (error) {
-      console.warn('Failed to save output language to localStorage:', error);
-    }
-  }, []);
-
-  // Translation function bound to current UI language
-  const translate = useCallback((key: string, interpolations?: Record<string, string>) => 
-    t(uiLanguage, key, interpolations), [uiLanguage]);
 
   return (
     <div className="min-h-screen w-full px-4 sm:px-6 lg:px-8 py-8 transition-colors duration-300">
-      <Header language={uiLanguage} setLanguage={handleUiLanguageChange} t={translate} />
+      <Header />
       <main className="container mx-auto mt-8">
         <div className="max-w-4xl mx-auto mb-10 space-y-8">
-            <ApiKeyInput 
-              apiKey={apiKey} 
-              onApiKeyChange={handleApiKeyChange} 
-              t={translate} 
-              isApiKeyFromEnv={isApiKeyFromEnv} 
-            />
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
                   <label htmlFor="model-name" className="block text-sm font-medium mb-2" style={{color: 'var(--text-color-secondary)'}}>
-                    {translate('common.aiModel')}
+                    AI Model
                   </label>
                   <Input
                     id="model-name"
                     type="text"
                     value={modelName}
                     onChange={(e) => setModelName(e.target.value)}
-                    placeholder={translate('settings.aiModelPlaceholder')}
+                    placeholder="e.g., gemini-2.5-flash"
                   />
                   <p className="text-xs mt-2" style={{ color: 'var(--text-color-secondary)' }}>
-                    {translate('settings.aiModelDescription')}
+                    Specify the model to use for all prompt generation tasks.
                   </p>
                 </div>
                 <div>
                   <label htmlFor="language-input" className="block text-sm font-medium mb-2" style={{color: 'var(--text-color-secondary)'}}>
-                    {translate('common.outputLanguage')}
+                    Output Language
                   </label>
                   <Input
                     id="language-input"
                     type="text"
-                    value={outputLanguage}
-                    onChange={(e) => handleOutputLanguageChange(e.target.value)}
-                    placeholder={translate('settings.outputLanguagePlaceholder')}
+                    value={language}
+                    onChange={(e) => setLanguage(e.target.value)}
+                    placeholder="e.g., English, Spanish, Japanese"
                   />
                    <p className="text-xs mt-2" style={{ color: 'var(--text-color-secondary)' }}>
-                    {translate('settings.outputLanguageDescription')}
+                    Enter the language for the generated prompt output.
                   </p>
                 </div>
             </div>
             <div>
-              <VariablesInput variables={variables} onChange={setVariables} t={translate} />
+              <VariablesInput variables={variables} onChange={setVariables} />
             </div>
         </div>
         <div className="space-y-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-            <SystemPromptArchitect modelName={modelName} language={outputLanguage} variables={variables} t={translate} />
-            <ConversationalPromptRefiner modelName={modelName} language={outputLanguage} variables={variables} t={translate} />
+            <SystemPromptArchitect modelName={modelName} language={language} variables={variables} />
+            <ConversationalPromptRefiner modelName={modelName} language={language} variables={variables} />
           </div>
-          <OptimizationAdvisor modelName={modelName} language={outputLanguage} variables={variables} t={translate} />
+          <OptimizationAdvisor modelName={modelName} language={language} variables={variables} />
         </div>
       </main>
       <footer className="text-center py-8 mt-12">
         <p style={{ color: 'var(--text-color-secondary)' }} className="text-sm">
-          {translate('app.footer')}
+          Built with the Liquid Glass Design System.
         </p>
       </footer>
     </div>

@@ -5,10 +5,9 @@ import { PlusIcon, TrashIcon } from './Icon';
 interface VariablesInputProps {
   variables: string[];
   onChange: (variables: string[]) => void;
-  t: (key: string, interpolations?: Record<string, string>) => string;
 }
 
-const VariablesInput: React.FC<VariablesInputProps> = ({ variables, onChange, t }) => {
+const VariablesInput: React.FC<VariablesInputProps> = ({ variables, onChange }) => {
   const addVariable = () => {
     onChange([...variables, '']);
   };
@@ -27,7 +26,7 @@ const VariablesInput: React.FC<VariablesInputProps> = ({ variables, onChange, t 
   return (
     <div>
       <label className="block text-sm font-medium mb-2" style={{ color: 'var(--text-color-secondary)' }}>
-        {t('variablesInput.title')}
+        Prompt Variables (Optional)
       </label>
       <div className="space-y-3">
         {variables.map((variable, index) => (
@@ -37,13 +36,13 @@ const VariablesInput: React.FC<VariablesInputProps> = ({ variables, onChange, t 
               type="text"
               value={variable}
               onChange={(e) => updateVariable(index, e.target.value)}
-              placeholder={t('variablesInput.placeholder')}
+              placeholder="e.g., {{user_input}} or ${customer_name}"
               className="!p-3"
             />
             <button
               onClick={() => removeVariable(index)}
               className="p-3 rounded-full text-[color:var(--text-color-secondary)] hover:bg-[color:color-mix(in_srgb,var(--text-color)_10%,transparent)] hover:text-red-500 transition-colors flex-shrink-0"
-              aria-label={t('variablesInput.removeLabel', { index: (index + 1).toString() })}
+              aria-label={`Remove variable ${index + 1}`}
             >
               <TrashIcon className="w-5 h-5" />
             </button>
@@ -55,11 +54,11 @@ const VariablesInput: React.FC<VariablesInputProps> = ({ variables, onChange, t 
           style={{ color: 'var(--text-color-secondary)', borderColor: 'var(--glass-border)' }}
         >
           <PlusIcon className="w-4 h-4" />
-          {t('variablesInput.addButton')}
+          Add Variable
         </button>
       </div>
        <p className="text-xs mt-2" style={{ color: 'var(--text-color-secondary)' }}>
-        {t('variablesInput.description')}
+        Define placeholders the AI should include in the generated prompt, like {`\`{{user_input}}\``}.
       </p>
     </div>
   );

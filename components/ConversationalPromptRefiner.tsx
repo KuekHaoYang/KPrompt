@@ -58,10 +58,9 @@ interface ConversationalPromptRefinerProps {
   modelName: string;
   language: string;
   variables: string[];
-  t: (key: string, interpolations?: Record<string, string>) => string;
 }
 
-const ConversationalPromptRefiner: React.FC<ConversationalPromptRefinerProps> = ({ modelName, language, variables, t }) => {
+const ConversationalPromptRefiner: React.FC<ConversationalPromptRefinerProps> = ({ modelName, language, variables }) => {
   const [systemPrompt, setSystemPrompt] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draftPrompt, setDraftPrompt] = useState('');
@@ -90,7 +89,7 @@ const ConversationalPromptRefiner: React.FC<ConversationalPromptRefinerProps> = 
 
   const handleSubmit = useCallback(async () => {
     if (!draftPrompt.trim()) {
-      setError(t('conversationalPromptRefiner.errorMessage'));
+      setError('Please enter a draft prompt to refine.');
       return;
     }
     setIsLoading(true);
@@ -109,7 +108,7 @@ const ConversationalPromptRefiner: React.FC<ConversationalPromptRefinerProps> = 
     } finally {
       setIsLoading(false);
     }
-  }, [systemPrompt, messages, draftPrompt, modelName, language, variables, t]);
+  }, [systemPrompt, messages, draftPrompt, modelName, language, variables]);
   
   const handleCopy = useCallback(() => {
     if (refinedPrompt) {
@@ -122,14 +121,14 @@ const ConversationalPromptRefiner: React.FC<ConversationalPromptRefinerProps> = 
   return (
     <GlassCard>
       <div className="space-y-4">
-        <h2 className="text-2xl font-bold" style={{ color: 'var(--text-color)' }}>{t('conversationalPromptRefiner.title')}</h2>
+        <h2 className="text-2xl font-bold" style={{ color: 'var(--text-color)' }}>Conversational Prompt Refiner</h2>
         <p style={{ color: 'var(--text-color-secondary)' }}>
-          {t('conversationalPromptRefiner.description')}
+          Provide conversation context and a draft prompt. We'll refine it for maximum effectiveness.
         </p>
         
         <TextArea
           id="system-prompt"
-          placeholder={t('conversationalPromptRefiner.systemPromptPlaceholder')}
+          placeholder="System Prompt (Optional)"
           value={systemPrompt}
           onChange={(e) => setSystemPrompt(e.target.value)}
           rows={3}
@@ -137,7 +136,7 @@ const ConversationalPromptRefiner: React.FC<ConversationalPromptRefinerProps> = 
         />
 
         <div>
-          <h3 className="text-lg font-semibold mb-2" style={{color: 'var(--text-color-secondary)'}}>{t('conversationalPromptRefiner.conversationHistoryTitle')}</h3>
+          <h3 className="text-lg font-semibold mb-2" style={{color: 'var(--text-color-secondary)'}}>Conversation History</h3>
           <div className="space-y-4">
             {messages.map((msg) => (
               <div 
@@ -164,14 +163,14 @@ const ConversationalPromptRefiner: React.FC<ConversationalPromptRefinerProps> = 
             ))}
             <button onClick={addMessage} className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-full border transition-colors hover:bg-[color:color-mix(in_srgb,var(--text-color)_10%,transparent)]" style={{color: 'var(--text-color-secondary)', borderColor: 'var(--glass-border)'}}>
               <PlusIcon className="w-4 h-4" />
-              {t('conversationalPromptRefiner.addMessageButton')}
+              Add Message
             </button>
           </div>
         </div>
 
         <TextArea
           id="draft-prompt"
-          placeholder={t('conversationalPromptRefiner.draftPromptPlaceholder')}
+          placeholder="Your Next User Prompt (Required)"
           value={draftPrompt}
           onChange={(e) => setDraftPrompt(e.target.value)}
           rows={3}
@@ -179,16 +178,16 @@ const ConversationalPromptRefiner: React.FC<ConversationalPromptRefinerProps> = 
         />
         
         <Button onClick={handleSubmit} disabled={isLoading || !draftPrompt.trim()}>
-          {isLoading ? <Loader /> : t('conversationalPromptRefiner.refineButton')}
+          {isLoading ? <Loader /> : 'Refine Prompt'}
         </Button>
         
         {error && <p className="text-red-500 text-sm mt-2 font-medium">{error}</p>}
         
         {refinedPrompt && (
           <div className="mt-6 space-y-3 fade-in">
-            <h3 className="text-xl font-semibold">{t('conversationalPromptRefiner.refinedTitle')}</h3>
+            <h3 className="text-xl font-semibold">Refined User Prompt:</h3>
             <div className="relative p-4 rounded-2xl" style={{ background: 'var(--glass-bg)', border: '1px solid var(--glass-border)' }}>
-               <button onClick={handleCopy} className="absolute top-2 right-2 p-2 rounded-full transition hover:bg-[color:color-mix(in_srgb,var(--text-color)_10%,transparent)]" style={{ background: 'var(--glass-bg)', color: 'var(--text-color-secondary)' }} aria-label={t('common.copy')}>
+               <button onClick={handleCopy} className="absolute top-2 right-2 p-2 rounded-full transition hover:bg-[color:color-mix(in_srgb,var(--text-color)_10%,transparent)]" style={{ background: 'var(--glass-bg)', color: 'var(--text-color-secondary)' }} aria-label="Copy prompt">
                 {copied ? <CheckIcon className="w-5 h-5 text-green-500" /> : <CopyIcon className="w-5 h-5" />}
               </button>
               <pre className="whitespace-pre-wrap break-words text-sm font-sans" style={{ color: 'var(--text-color)' }}>

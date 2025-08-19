@@ -1,31 +1,8 @@
+
 import { GoogleGenAI } from "@google/genai";
 
-let ai: GoogleGenAI | null = null;
-
-// New function to initialize the AI instance from the UI
-export function initializeAi(apiKey: string) {
-    if (apiKey && apiKey.trim()) {
-        try {
-            ai = new GoogleGenAI({ apiKey });
-        } catch (error) {
-            console.error("Failed to initialize GoogleGenAI:", error);
-            ai = null; // Ensure ai is null if initialization fails
-        }
-    } else {
-        ai = null;
-    }
-}
-
-/**
- * Lists available models.
- * NOTE: The @google/genai SDK does not provide a public API for listing models.
- * This function returns a static list of recommended and allowed models for text generation.
- * This approach ensures compliance with model usage guidelines.
- */
-export async function listAvailableModels(): Promise<string[]> {
-    return ['gemini-2.5-flash'];
-}
-
+// As per guidelines, the API key is exclusively from process.env.API_KEY
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
 
 // Cache for the fetched rules
 let systemPromptRules: string | null = null;
@@ -47,9 +24,15 @@ async function getSystemPromptRules(): Promise<string> {
     return systemPromptRules;
 }
 
+export const listAvailableModels = async (): Promise<string[]> => {
+    // Per guidelines, the primary text model for this app is 'gemini-2.5-flash'.
+    return ['gemini-2.5-flash'];
+};
+
+
 async function generateContent(masterPrompt: string, model: string): Promise<string> {
-    if (!ai) {
-        throw new Error("API Key not set or invalid. Please configure your API Key in the settings area.");
+    if (!process.env.API_KEY) {
+        throw new Error("API_KEY environment variable not set. This is a required configuration for the application to function.");
     }
     try {
         const response = await ai.models.generateContent({
@@ -60,13 +43,10 @@ async function generateContent(masterPrompt: string, model: string): Promise<str
     } catch (error: any) {
         console.error("Gemini API Error:", error);
         if (error.message.toLowerCase().includes('api key not valid')) {
-            throw new Error("The API Key is invalid or expired. Please check it and save it again.");
+            throw new Error("The API Key from the environment is invalid or expired.");
         }
         if (error.message.toLowerCase().includes('permission denied')) {
-            throw new Error("The API Key is valid, but may not have permission for the specified model.");
-        }
-        if (error.message.toLowerCase().includes('api key must be provided')) {
-             throw new Error("API Key not set or invalid. Please configure your API Key in the settings area.");
+            throw new Error("The configured API Key is valid, but may not have permission for the specified model.");
         }
         throw new Error(error.message || "An unknown API error occurred.");
     }
