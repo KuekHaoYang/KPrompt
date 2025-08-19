@@ -4,6 +4,40 @@ import { SunIcon, MoonIcon, ComputerDesktopIcon } from './Icon';
 
 type Theme = 'light' | 'dark' | 'system';
 
+interface LanguageSwitcherProps {
+  language: string;
+  setLanguage: (language: string) => void;
+  t: (key: string) => string;
+}
+
+const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({ language, setLanguage, t }) => {
+  const isChineseActive = language.includes('Chinese') || language === '简体中文';
+  
+  const buttonBaseClasses = "flex items-center justify-center px-3 py-1.5 bg-transparent border-none rounded-full cursor-pointer transition-all duration-200 ease-in-out text-sm font-semibold";
+  const buttonHoverClasses = "hover:bg-[color:color-mix(in_srgb,var(--text-color)_10%,transparent)]";
+  const textSecondaryColor = "text-[color:var(--text-color-secondary)]";
+  const activeClasses = "!bg-[color:var(--accent-color)] !text-white scale-105";
+
+  return (
+    <div className="inline-flex p-1 rounded-full border mr-4" style={{ background: 'var(--glass-bg)', borderColor: 'var(--glass-border)' }}>
+      <button 
+        onClick={() => setLanguage('English')} 
+        className={`${buttonBaseClasses} ${language === 'English' ? activeClasses : `${textSecondaryColor} ${buttonHoverClasses}`}`}
+        aria-label={t('language.switchToEnglish')}
+      >
+        {t('language.english')}
+      </button>
+      <button 
+        onClick={() => setLanguage('Chinese Simplified')} 
+        className={`${buttonBaseClasses} ${isChineseActive ? activeClasses : `${textSecondaryColor} ${buttonHoverClasses}`}`}
+        aria-label={t('language.switchToChinese')}
+      >
+        {t('language.chinese')}
+      </button>
+    </div>
+  );
+};
+
 const ThemeSwitcher: React.FC = () => {
     const [theme, setTheme] = useState<Theme>('system');
 
@@ -61,16 +95,23 @@ const ThemeSwitcher: React.FC = () => {
 };
 
 
-const Header: React.FC = () => {
+interface HeaderProps {
+  language: string;
+  setLanguage: (language: string) => void;
+  t: (key: string) => string;
+}
+
+const Header: React.FC<HeaderProps> = ({ language, setLanguage, t }) => {
   return (
     <header className="text-center space-y-4">
       <h1 className="text-4xl sm:text-5xl font-bold tracking-tight" style={{ color: 'var(--text-color)' }}>
-        KPrompt
+        {t('app.title')}
       </h1>
       <p className="text-lg" style={{ color: 'var(--text-color-secondary)' }}>
-        AI Prompt Engineering Workbench
+        {t('app.subtitle')}
       </p>
-      <div className="pt-2">
+      <div className="pt-2 flex justify-center items-center">
+        <LanguageSwitcher language={language} setLanguage={setLanguage} t={t} />
         <ThemeSwitcher />
       </div>
     </header>
