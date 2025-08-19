@@ -10,7 +10,7 @@ import Button from './components/Button';
 import { t, UiLanguage } from './services/translations';
 
 const App: React.FC = () => {
-  const [modelName, setModelName] = useState('gemini-2.5-flash');
+  const [modelName, setModelName] = useState('gemini-2.5-pro');
   const [variables, setVariables] = useState<string[]>([]);
   const [uiLang, setUiLang] = useState<UiLanguage>('en');
   const [showSettings, setShowSettings] = useState(false);
@@ -52,7 +52,7 @@ const App: React.FC = () => {
                     type="text"
                     value={modelName}
                     onChange={(e) => setModelName(e.target.value)}
-                    placeholder="e.g., gemini-2.5-flash"
+                    placeholder="e.g., gemini-2.5-pro"
                   />
                   <p className="text-xs mt-2" style={{ color: 'var(--text-color-secondary)' }}>
                     {t('config.model.description', uiLang)}

@@ -77,8 +77,8 @@ async function getSystemPromptRules(): Promise<string> {
 }
 
 export const listAvailableModels = async (): Promise<string[]> => {
-    // Per guidelines, the primary text model for this app is 'gemini-2.5-flash'.
-    return ['gemini-2.5-flash'];
+    // Per guidelines, the primary text model for this app is 'gemini-2.5-pro'.
+    return ['gemini-2.5-pro'];
 };
 
 

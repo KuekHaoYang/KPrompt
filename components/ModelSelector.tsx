@@ -7,7 +7,7 @@ interface ModelSelectorProps extends React.SelectHTMLAttributes<HTMLSelectElemen
 
 const ModelSelector: React.FC<ModelSelectorProps> = ({ value, onChange, ...props }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [options, setOptions] = useState([{ value: 'gemini-2.5-flash', label: 'gemini-2.5-flash' }]);
+  const [options, setOptions] = useState([{ value: 'gemini-2.5-pro', label: 'gemini-2.5-flash-pro' }]);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   const fetchModels = useCallback(async () => {
