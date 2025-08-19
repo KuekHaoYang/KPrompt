@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from 'react';
 import { getOptimizationAdvice, applyOptimizationAdvice } from '../services/geminiService';
 import GlassCard from './GlassCard';
@@ -14,6 +15,7 @@ interface OptimizationAdvisorProps {
   language: string;
   variables: string[];
   uiLang: UiLanguage;
+  systemPromptRules: string;
 }
 
 interface AdviceSectionProps {
@@ -84,7 +86,7 @@ const AdviceSection: React.FC<AdviceSectionProps> = ({
 );
 
 
-const OptimizationAdvisor: React.FC<OptimizationAdvisorProps> = ({ modelName, language, variables, uiLang }) => {
+const OptimizationAdvisor: React.FC<OptimizationAdvisorProps> = ({ modelName, language, variables, uiLang, systemPromptRules }) => {
   const [systemPrompt, setSystemPrompt] = useState('');
   const [userPrompt, setUserPrompt] = useState('');
   const [advice, setAdvice] = useState<{ system: string[]; user: string[] } | null>(null);
@@ -110,11 +112,11 @@ const OptimizationAdvisor: React.FC<OptimizationAdvisorProps> = ({ modelName, la
       const promptTypes: PromptType[] = [];
 
       if (systemPrompt.trim()) {
-        advicePromises.push(getOptimizationAdvice(systemPrompt, 'system', modelName, language, variables));
+        advicePromises.push(getOptimizationAdvice(systemPrompt, 'system', modelName, language, variables, systemPromptRules));
         promptTypes.push('system');
       }
       if (userPrompt.trim()) {
-        advicePromises.push(getOptimizationAdvice(userPrompt, 'user', modelName, language, variables));
+        advicePromises.push(getOptimizationAdvice(userPrompt, 'user', modelName, language, variables, systemPromptRules));
         promptTypes.push('user');
       }
 
@@ -133,7 +135,7 @@ const OptimizationAdvisor: React.FC<OptimizationAdvisorProps> = ({ modelName, la
     } finally {
       setIsLoading(false);
     }
-  }, [systemPrompt, userPrompt, modelName, language, variables, uiLang]);
+  }, [systemPrompt, userPrompt, modelName, language, variables, uiLang, systemPromptRules]);
 
   const handleApplyAdvice = useCallback(async (type: PromptType) => {
     if (!advice) return;
@@ -147,7 +149,7 @@ const OptimizationAdvisor: React.FC<OptimizationAdvisorProps> = ({ modelName, la
     setError(null);
 
     try {
-      const result = await applyOptimizationAdvice(originalPrompt, adviceToApply, type, modelName, language, variables);
+      const result = await applyOptimizationAdvice(originalPrompt, adviceToApply, type, modelName, language, variables, systemPromptRules);
       setRefinedPrompts(prev => ({ ...prev, [type]: result }));
     } catch (e: any)
 {
@@ -155,7 +157,7 @@ const OptimizationAdvisor: React.FC<OptimizationAdvisorProps> = ({ modelName, la
     } finally {
       setIsRefining(null);
     }
-  }, [systemPrompt, userPrompt, advice, modelName, language, variables, uiLang]);
+  }, [systemPrompt, userPrompt, advice, modelName, language, variables, uiLang, systemPromptRules]);
 
   const handleCopyAdvice = useCallback((type: PromptType) => {
     if (!advice) return;

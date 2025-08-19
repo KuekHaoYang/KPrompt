@@ -14,6 +14,7 @@ interface SystemPromptArchitectProps {
   language: string;
   variables: string[];
   uiLang: UiLanguage;
+  systemPromptRules: string;
 }
 
 // Props for the internal CollapsibleStep component
@@ -58,7 +59,7 @@ const CollapsibleStep: React.FC<CollapsibleStepProps> = ({ step, title, isComple
   );
 };
 
-const SystemPromptArchitect: React.FC<SystemPromptArchitectProps> = ({ modelName, language, variables, uiLang }) => {
+const SystemPromptArchitect: React.FC<SystemPromptArchitectProps> = ({ modelName, language, variables, uiLang, systemPromptRules }) => {
   // State for each step's data
   const [description, setDescription] = useState('');
   const [thinkingPoints, setThinkingPoints] = useState<string[] | null>(null);
@@ -97,7 +98,7 @@ const SystemPromptArchitect: React.FC<SystemPromptArchitectProps> = ({ modelName
     setLoadingStep(1);
     resetState();
     try {
-      const result = await getSystemPromptThinkingPoints(description, modelName, language, variables);
+      const result = await getSystemPromptThinkingPoints(description, modelName, language, variables, systemPromptRules);
       const points = result.split('\n').map(s => s.replace(/^[*-]\s*/, '').trim()).filter(Boolean);
       setThinkingPoints(points);
       setCompletedSteps([1]);
@@ -107,34 +108,28 @@ const SystemPromptArchitect: React.FC<SystemPromptArchitectProps> = ({ modelName
     } finally {
       setLoadingStep(null);
     }
-  }, [description, modelName, language, variables, uiLang]);
-
-  const handleGenerateInitialPrompt = useCallback(async () => {
-    if (!thinkingPoints || thinkingPoints.every(p => p.trim() === '')) {
-      setError('Please provide at least one key directive.');
-      return;
-    }
-    setLoadingStep(2);
+  }, [description, modelName, language, variables, uiLang, systemPromptRules]);
+  
+  const handleGenerateFinalPrompt = useCallback(async (originalPrompt: string, adviceToApply: string[]) => {
+    setLoadingStep(4);
     setError(null);
     try {
-      const result = await generateSystemPrompt(description, modelName, language, variables, thinkingPoints);
-      setInitialPrompt(result);
-      setCompletedSteps([1, 2]);
-      setOpenStep(3);
-      // Automatically trigger the next step
-      await handleGetAdvice(result);
+        const result = await applyOptimizationAdvice(originalPrompt, adviceToApply, 'system', modelName, language, variables, systemPromptRules);
+        setFinalPrompt(result);
+        setCompletedSteps([1, 2, 3, 4]);
+        setOpenStep(4); // Keep the final step open
     } catch (e: any) {
-      setError(e.message || t('error.unknown', uiLang));
+        setError(e.message || t('error.unknown', uiLang));
     } finally {
-      setLoadingStep(null);
+        setLoadingStep(null);
     }
-  }, [description, modelName, language, variables, thinkingPoints, uiLang]);
+  }, [modelName, language, variables, uiLang, systemPromptRules]);
 
   const handleGetAdvice = useCallback(async (promptToAnalyze: string) => {
     setLoadingStep(3);
     setError(null);
     try {
-        const result = await getOptimizationAdvice(promptToAnalyze, 'system', modelName, language, variables);
+        const result = await getOptimizationAdvice(promptToAnalyze, 'system', modelName, language, variables, systemPromptRules);
         const adviceList = result.split('\n').map(s => s.replace(/^[*-]\s*/, '').trim()).filter(Boolean);
         setAdvice(adviceList);
         setCompletedSteps([1, 2, 3]);
@@ -147,23 +142,29 @@ const SystemPromptArchitect: React.FC<SystemPromptArchitectProps> = ({ modelName
     } finally {
         setLoadingStep(null);
     }
-  }, [modelName, language, variables, uiLang]);
+  }, [modelName, language, variables, uiLang, systemPromptRules, handleGenerateFinalPrompt]);
 
-  const handleGenerateFinalPrompt = useCallback(async (originalPrompt: string, adviceToApply: string[]) => {
-    setLoadingStep(4);
+  const handleGenerateInitialPrompt = useCallback(async () => {
+    if (!thinkingPoints || thinkingPoints.every(p => p.trim() === '')) {
+      setError('Please provide at least one key directive.');
+      return;
+    }
+    setLoadingStep(2);
     setError(null);
     try {
-        const result = await applyOptimizationAdvice(originalPrompt, adviceToApply, 'system', modelName, language, variables);
-        setFinalPrompt(result);
-        setCompletedSteps([1, 2, 3, 4]);
-        setOpenStep(4); // Keep the final step open
+      const result = await generateSystemPrompt(description, modelName, language, variables, systemPromptRules, thinkingPoints);
+      setInitialPrompt(result);
+      setCompletedSteps([1, 2]);
+      setOpenStep(3);
+      // Automatically trigger the next step
+      await handleGetAdvice(result);
     } catch (e: any) {
-        setError(e.message || t('error.unknown', uiLang));
+      setError(e.message || t('error.unknown', uiLang));
     } finally {
-        setLoadingStep(null);
+      setLoadingStep(null);
     }
-  }, [modelName, language, variables, uiLang]);
-  
+  }, [description, modelName, language, variables, thinkingPoints, uiLang, systemPromptRules, handleGetAdvice]);
+
   const handleAutomaticGeneration = useCallback(async () => {
     if (!description.trim()) {
       setError(t('error.enterDescription', uiLang));
@@ -176,27 +177,27 @@ const SystemPromptArchitect: React.FC<SystemPromptArchitectProps> = ({ modelName
     try {
       // Step 1
       setAutomationStatus('Step 1/4: Generating Key Directives...');
-      const pointsResult = await getSystemPromptThinkingPoints(description, modelName, language, variables);
+      const pointsResult = await getSystemPromptThinkingPoints(description, modelName, language, variables, systemPromptRules);
       const points = pointsResult.split('\n').map(s => s.replace(/^[*-]\s*/, '').trim()).filter(Boolean);
       setThinkingPoints(points);
       setCompletedSteps([1]);
 
       // Step 2
       setAutomationStatus('Step 2/4: Generating Initial Prompt...');
-      const initialPromptResult = await generateSystemPrompt(description, modelName, language, variables, points);
+      const initialPromptResult = await generateSystemPrompt(description, modelName, language, variables, systemPromptRules, points);
       setInitialPrompt(initialPromptResult);
       setCompletedSteps([1, 2]);
 
       // Step 3
       setAutomationStatus('Step 3/4: Getting Optimization Advice...');
-      const adviceResult = await getOptimizationAdvice(initialPromptResult, 'system', modelName, language, variables);
+      const adviceResult = await getOptimizationAdvice(initialPromptResult, 'system', modelName, language, variables, systemPromptRules);
       const adviceList = adviceResult.split('\n').map(s => s.replace(/^[*-]\s*/, '').trim()).filter(Boolean);
       setAdvice(adviceList);
       setCompletedSteps([1, 2, 3]);
 
       // Step 4
       setAutomationStatus('Step 4/4: Generating Final Refined Prompt...');
-      const finalPromptResult = await applyOptimizationAdvice(initialPromptResult, adviceList, 'system', modelName, language, variables);
+      const finalPromptResult = await applyOptimizationAdvice(initialPromptResult, adviceList, 'system', modelName, language, variables, systemPromptRules);
       setFinalPrompt(finalPromptResult);
       setCompletedSteps([1, 2, 3, 4]);
       
@@ -208,7 +209,7 @@ const SystemPromptArchitect: React.FC<SystemPromptArchitectProps> = ({ modelName
       setLoadingStep(null);
       setAutomationStatus(null);
     }
-  }, [description, modelName, language, variables, uiLang]);
+  }, [description, modelName, language, variables, uiLang, systemPromptRules]);
 
 
   const handleCopy = useCallback(() => {

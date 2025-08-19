@@ -1,4 +1,5 @@
 
+
 import React, { useState, useCallback } from 'react';
 import { refineSystemPrompt, refineUserPrompt } from '../services/geminiService';
 import GlassCard from './GlassCard';
@@ -15,9 +16,10 @@ interface SystemPromptRefinerProps {
   language: string;
   variables: string[];
   uiLang: UiLanguage;
+  systemPromptRules: string;
 }
 
-const SystemPromptRefiner: React.FC<SystemPromptRefinerProps> = ({ modelName, language, variables, uiLang }) => {
+const SystemPromptRefiner: React.FC<SystemPromptRefinerProps> = ({ modelName, language, variables, uiLang, systemPromptRules }) => {
   const [promptType, setPromptType] = useState<PromptType>('system');
   const [existingPrompt, setExistingPrompt] = useState('');
   const [refinedPrompt, setRefinedPrompt] = useState('');
@@ -36,10 +38,10 @@ const SystemPromptRefiner: React.FC<SystemPromptRefinerProps> = ({ modelName, la
     try {
       let result;
       if (promptType === 'system') {
-        result = await refineSystemPrompt(existingPrompt, modelName, language, variables);
+        result = await refineSystemPrompt(existingPrompt, modelName, language, variables, systemPromptRules);
       } else {
         // For a general user prompt refiner, we pass empty context
-        result = await refineUserPrompt('', '', existingPrompt, modelName, language, variables);
+        result = await refineUserPrompt('', '', existingPrompt, modelName, language, variables, systemPromptRules);
       }
       setRefinedPrompt(result);
     } catch (e: any) {
@@ -47,7 +49,7 @@ const SystemPromptRefiner: React.FC<SystemPromptRefinerProps> = ({ modelName, la
     } finally {
       setIsLoading(false);
     }
-  }, [existingPrompt, modelName, language, variables, promptType, uiLang]);
+  }, [existingPrompt, modelName, language, variables, promptType, uiLang, systemPromptRules]);
 
   const handleCopy = useCallback(() => {
     if (refinedPrompt) {

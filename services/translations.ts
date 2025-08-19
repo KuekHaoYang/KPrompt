@@ -1,3 +1,4 @@
+
 export type UiLanguage = 'en' | 'zh';
 
 const translations = {
@@ -12,6 +13,8 @@ const translations = {
     'config.variables.description': 'Define placeholders the AI should include in the generated prompt, like `{`\`{{user_input}}\``}.',
     'config.variables.add': 'Add Variable',
     'config.variables.placeholder': 'e.g., {{user_input}} or ${customer_name}',
+    'config.systemRules': 'System Prompt Rules',
+    'config.systemRules.description': 'These rules are included in every prompt to the AI to guide its behavior.',
     
     // System Prompt Architect
     'architect.title': 'System Prompt Architect',
@@ -100,6 +103,8 @@ const translations = {
     'config.variables.description': '定义 AI 应包含在生成的提示词中的占位符，例如 `{`\`{{user_input}}\``}。',
     'config.variables.add': '添加变量',
     'config.variables.placeholder': '例如 {{user_input}} 或 ${customer_name}',
+    'config.systemRules': '系统提示词规则',
+    'config.systemRules.description': '这些规则被包含在每一个发送给AI的提示中，用以指导其行为。',
     
     // System Prompt Architect
     'architect.title': '系统提示词架构师',

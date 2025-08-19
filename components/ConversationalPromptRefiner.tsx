@@ -60,9 +60,10 @@ interface ConversationalPromptRefinerProps {
   language: string;
   variables: string[];
   uiLang: UiLanguage;
+  systemPromptRules: string;
 }
 
-const ConversationalPromptRefiner: React.FC<ConversationalPromptRefinerProps> = ({ modelName, language, variables, uiLang }) => {
+const ConversationalPromptRefiner: React.FC<ConversationalPromptRefinerProps> = ({ modelName, language, variables, uiLang, systemPromptRules }) => {
   const [systemPrompt, setSystemPrompt] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draftPrompt, setDraftPrompt] = useState('');
@@ -103,14 +104,14 @@ const ConversationalPromptRefiner: React.FC<ConversationalPromptRefinerProps> = 
       .join('\n\n');
 
     try {
-      const result = await refineUserPrompt(systemPrompt, historyString, draftPrompt, modelName, language, variables);
+      const result = await refineUserPrompt(systemPrompt, historyString, draftPrompt, modelName, language, variables, systemPromptRules);
       setRefinedPrompt(result);
     } catch (e: any) {
         setError(e.message || t('error.unknown', uiLang));
     } finally {
       setIsLoading(false);
     }
-  }, [systemPrompt, messages, draftPrompt, modelName, language, variables, uiLang]);
+  }, [systemPrompt, messages, draftPrompt, modelName, language, variables, uiLang, systemPromptRules]);
   
   const handleCopy = useCallback(() => {
     if (refinedPrompt) {

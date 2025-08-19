@@ -1,3 +1,4 @@
+
 import { GoogleGenAI } from "@google/genai";
 
 let ai: GoogleGenAI | null = null;
@@ -55,32 +56,9 @@ export function updateApiKey(newKey: string) {
     initializeAiClient();
 }
 
-
-// Cache for the fetched rules
-let systemPromptRules: string | null = null;
-
-// Asynchronously fetch and cache the system prompt rules
-async function getSystemPromptRules(): Promise<string> {
-    if (systemPromptRules === null) {
-        try {
-            const response = await fetch('prompts/systemPromptRules.txt');
-            if (!response.ok) {
-                throw new Error(`Failed to fetch system prompt rules: ${response.statusText}`);
-            }
-            systemPromptRules = await response.text();
-        } catch (error) {
-            console.error('Error loading system prompt rules:', error);
-            throw new Error('Could not load essential application configuration. Please check your network connection and refresh the page.');
-        }
-    }
-    return systemPromptRules;
-}
-
 export const listAvailableModels = async (): Promise<string[]> => {
-    // Per guidelines, the primary text model for this app is 'gemini-2.5-pro'.
-    // In a real app, you might fetch this from the API, but for now, it's static.
-    // This is a placeholder as the Gemini API does not have a public model listing endpoint yet.
-    return ['gemini-2.5-pro'];
+    // Per guidelines, the primary text model for this app is 'gemini-2.5-flash'.
+    return ['gemini-2.5-flash'];
 };
 
 
@@ -132,8 +110,8 @@ For example, if a variable is \`{{user_topic}}\`, you might include a sentence l
     `;
 };
 
-export const generateSystemPrompt = async (description: string, model: string, language: string, variables: string[], thinkingPoints?: string[]): Promise<string> => {
-  const SYSTEM_PROMPT_RULES = await getSystemPromptRules();
+export const generateSystemPrompt = async (description: string, model: string, language: string, variables: string[], systemPromptRules: string, thinkingPoints?: string[]): Promise<string> => {
+  const SYSTEM_PROMPT_RULES = systemPromptRules;
   const variablesSection = formatVariablesForPrompt(variables);
   const thinkingPointsSection = (thinkingPoints && thinkingPoints.length > 0 && thinkingPoints.some(p => p.trim() !== ''))
     ? `
@@ -189,8 +167,9 @@ export const refineUserPrompt = async (
   model: string,
   language: string,
   variables: string[],
+  systemPromptRules: string,
 ): Promise<string> => {
-    const SYSTEM_PROMPT_RULES = await getSystemPromptRules();
+    const SYSTEM_PROMPT_RULES = systemPromptRules;
     const variablesSection = formatVariablesForPrompt(variables);
 
     const masterPrompt = `
@@ -237,8 +216,8 @@ Refined Prompt:
     }
 };
 
-export const refineSystemPrompt = async (existingPrompt: string, model: string, language: string, variables: string[]): Promise<string> => {
-  const SYSTEM_PROMPT_RULES = await getSystemPromptRules();
+export const refineSystemPrompt = async (existingPrompt: string, model: string, language: string, variables: string[], systemPromptRules: string): Promise<string> => {
+  const SYSTEM_PROMPT_RULES = systemPromptRules;
   const variablesSection = formatVariablesForPrompt(variables);
 
   const masterPrompt = `
@@ -280,9 +259,10 @@ export const getSystemPromptThinkingPoints = async (
   description: string,
   model: string,
   language: string,
-  variables: string[]
+  variables: string[],
+  systemPromptRules: string
 ): Promise<string> => {
-  const SYSTEM_PROMPT_RULES = await getSystemPromptRules();
+  const SYSTEM_PROMPT_RULES = systemPromptRules;
   const variablesSection = formatVariablesForPrompt(variables);
 
   const masterPrompt = `
@@ -325,9 +305,10 @@ export const getOptimizationAdvice = async (
   promptType: 'system' | 'user',
   model: string,
   language: string,
-  variables: string[]
+  variables: string[],
+  systemPromptRules: string
 ): Promise<string> => {
-  const SYSTEM_PROMPT_RULES = await getSystemPromptRules();
+  const SYSTEM_PROMPT_RULES = systemPromptRules;
   const variablesSection = formatVariablesForPrompt(variables);
 
   const masterPrompt = `
@@ -370,9 +351,10 @@ export const applyOptimizationAdvice = async (
   promptType: 'system' | 'user',
   model: string,
   language: string,
-  variables: string[]
+  variables: string[],
+  systemPromptRules: string,
 ): Promise<string> => {
-  const SYSTEM_PROMPT_RULES = await getSystemPromptRules();
+  const SYSTEM_PROMPT_RULES = systemPromptRules;
   const variablesSection = formatVariablesForPrompt(variables);
   const adviceSection = advice.map(a => `- ${a}`).join('\n');
 
