@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  kprompt:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        GEMINI_API_KEY: ${GEMINI_API_KEY}
+    ports:
+      - "3000:80"
+    restart: unless-stopped
+    container_name: kprompt
