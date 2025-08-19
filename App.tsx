@@ -10,33 +10,45 @@ import { t } from './locales';
 
 const App: React.FC = () => {
   const [modelName, setModelName] = useState('gemini-2.5-flash');
-  const [uiLanguage, setUiLanguage] = useState('English'); // UI界面语言
-  const [outputLanguage, setOutputLanguage] = useState('English'); // AI输出语言
+  const [uiLanguage, setUiLanguage] = useState('English'); // UI interface language
+  const [outputLanguage, setOutputLanguage] = useState('English'); // AI output language
   const [variables, setVariables] = useState<string[]>([]);
 
   // Initialize languages from localStorage on component mount
   useEffect(() => {
-    const savedUiLanguage = localStorage.getItem('uiLanguage') || 'English';
-    const savedOutputLanguage = localStorage.getItem('outputLanguage') || 'English';
-    setUiLanguage(savedUiLanguage);
-    setOutputLanguage(savedOutputLanguage);
+    try {
+      const savedUiLanguage = localStorage.getItem('kprompt.uiLanguage') || 'English';
+      const savedOutputLanguage = localStorage.getItem('kprompt.outputLanguage') || 'English';
+      setUiLanguage(savedUiLanguage);
+      setOutputLanguage(savedOutputLanguage);
+    } catch (error) {
+      console.warn('Failed to load language preferences from localStorage:', error);
+    }
   }, []);
 
   // Handle UI language change with localStorage persistence
   const handleUiLanguageChange = useCallback((newLanguage: string) => {
     setUiLanguage(newLanguage);
-    localStorage.setItem('uiLanguage', newLanguage);
+    try {
+      localStorage.setItem('kprompt.uiLanguage', newLanguage);
+    } catch (error) {
+      console.warn('Failed to save UI language to localStorage:', error);
+    }
   }, []);
 
   // Handle output language change with localStorage persistence
   const handleOutputLanguageChange = useCallback((newLanguage: string) => {
     setOutputLanguage(newLanguage);
-    localStorage.setItem('outputLanguage', newLanguage);
+    try {
+      localStorage.setItem('kprompt.outputLanguage', newLanguage);
+    } catch (error) {
+      console.warn('Failed to save output language to localStorage:', error);
+    }
   }, []);
 
   // Translation function bound to current UI language
-  const translate = (key: string, interpolations?: Record<string, string>) => 
-    t(uiLanguage, key, interpolations);
+  const translate = useCallback((key: string, interpolations?: Record<string, string>) => 
+    t(uiLanguage, key, interpolations), [uiLanguage]);
 
   return (
     <div className="min-h-screen w-full px-4 sm:px-6 lg:px-8 py-8 transition-colors duration-300">
@@ -53,7 +65,7 @@ const App: React.FC = () => {
                     type="text"
                     value={modelName}
                     onChange={(e) => setModelName(e.target.value)}
-                    placeholder="e.g., gemini-2.5-flash"
+                    placeholder={translate('settings.aiModelPlaceholder')}
                   />
                   <p className="text-xs mt-2" style={{ color: 'var(--text-color-secondary)' }}>
                     {translate('settings.aiModelDescription')}
@@ -68,7 +80,7 @@ const App: React.FC = () => {
                     type="text"
                     value={outputLanguage}
                     onChange={(e) => handleOutputLanguageChange(e.target.value)}
-                    placeholder="e.g., English, Spanish, Japanese"
+                    placeholder={translate('settings.outputLanguagePlaceholder')}
                   />
                    <p className="text-xs mt-2" style={{ color: 'var(--text-color-secondary)' }}>
                     {translate('settings.outputLanguageDescription')}

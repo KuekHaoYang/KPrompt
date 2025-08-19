@@ -23,14 +23,14 @@ const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({ language, setLangua
       <button 
         onClick={() => setLanguage('English')} 
         className={`${buttonBaseClasses} ${language === 'English' ? activeClasses : `${textSecondaryColor} ${buttonHoverClasses}`}`}
-        aria-label="Switch to English"
+        aria-label={t('language.switchToEnglish')}
       >
         {t('language.english')}
       </button>
       <button 
         onClick={() => setLanguage('Chinese Simplified')} 
         className={`${buttonBaseClasses} ${isChineseActive ? activeClasses : `${textSecondaryColor} ${buttonHoverClasses}`}`}
-        aria-label="Switch to Chinese Simplified"
+        aria-label={t('language.switchToChinese')}
       >
         {t('language.chinese')}
       </button>

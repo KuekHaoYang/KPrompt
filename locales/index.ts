@@ -64,6 +64,8 @@ interface Translations {
   settings: {
     aiModelDescription: string;
     outputLanguageDescription: string;
+    aiModelPlaceholder: string;
+    outputLanguagePlaceholder: string;
   };
   theme: {
     lightLabel: string;
@@ -73,6 +75,8 @@ interface Translations {
   language: {
     english: string;
     chinese: string;
+    switchToEnglish: string;
+    switchToChinese: string;
   };
 }
 
@@ -137,7 +141,9 @@ const translations: Record<Locale, Translations> = {
     },
     settings: {
       aiModelDescription: "Specify the model to use for all prompt generation tasks.",
-      outputLanguageDescription: "Enter the language for the generated prompt output."
+      outputLanguageDescription: "Enter the language for the generated prompt output.",
+      aiModelPlaceholder: "e.g., gemini-2.5-flash",
+      outputLanguagePlaceholder: "e.g., English, Spanish, Japanese"
     },
     theme: {
       lightLabel: "Set light theme",
@@ -146,7 +152,9 @@ const translations: Record<Locale, Translations> = {
     },
     language: {
       english: "English",
-      chinese: "简体中文"
+      chinese: "简体中文",
+      switchToEnglish: "Switch to English",
+      switchToChinese: "Switch to Chinese"
     }
   },
   'Chinese Simplified': {
@@ -209,7 +217,9 @@ const translations: Record<Locale, Translations> = {
     },
     settings: {
       aiModelDescription: "指定用于所有提示生成任务的模型。",
-      outputLanguageDescription: "输入生成提示输出的语言。"
+      outputLanguageDescription: "输入生成提示输出的语言。",
+      aiModelPlaceholder: "例如：gemini-2.5-flash",
+      outputLanguagePlaceholder: "例如：中文，英文，日文"
     },
     theme: {
       lightLabel: "设置浅色主题",
@@ -218,7 +228,9 @@ const translations: Record<Locale, Translations> = {
     },
     language: {
       english: "English",
-      chinese: "简体中文"
+      chinese: "简体中文",
+      switchToEnglish: "切换到英文",
+      switchToChinese: "切换到中文"
     }
   }
 };
