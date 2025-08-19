@@ -25,8 +25,8 @@ const App: React.FC = () => {
       setUiLang('zh');
     }
 
-    // Load the system prompt rules from the local file
-    fetch('/prompts/systemPromptRules.txt')
+    // Load the system prompt rules from the correct URL
+    fetch('https://raw.githubusercontent.com/KuekHaoYang/KPrompt/refs/heads/main/prompts/systemPromptRules.txt')
       .then(response => {
         if (!response.ok) {
           throw new Error('Network response was not ok');
