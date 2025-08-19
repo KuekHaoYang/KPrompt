@@ -63,7 +63,7 @@ let systemPromptRules: string | null = null;
 async function getSystemPromptRules(): Promise<string> {
     if (systemPromptRules === null) {
         try {
-            const response = await fetch('https://raw.githubusercontent.com/KuekHaoYang/KPrompt/refs/heads/main/prompts/systemPromptRules.txt');
+            const response = await fetch('/prompts/systemPromptRules.txt');
             if (!response.ok) {
                 throw new Error(`Failed to fetch system prompt rules: ${response.statusText}`);
             }
@@ -78,6 +78,8 @@ async function getSystemPromptRules(): Promise<string> {
 
 export const listAvailableModels = async (): Promise<string[]> => {
     // Per guidelines, the primary text model for this app is 'gemini-2.5-pro'.
+    // In a real app, you might fetch this from the API, but for now, it's static.
+    // This is a placeholder as the Gemini API does not have a public model listing endpoint yet.
     return ['gemini-2.5-pro'];
 };
 
