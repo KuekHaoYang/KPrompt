@@ -63,7 +63,7 @@ let systemPromptRules: string | null = null;
 async function getSystemPromptRules(): Promise<string> {
     if (systemPromptRules === null) {
         try {
-            const response = await fetch('/prompts/systemPromptRules.txt');
+            const response = await fetch('prompts/systemPromptRules.txt');
             if (!response.ok) {
                 throw new Error(`Failed to fetch system prompt rules: ${response.statusText}`);
             }
