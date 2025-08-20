@@ -1,45 +1,9 @@
 
 import { GoogleGenAI } from "@google/genai";
 
-// 拦截fetch请求并重定向到自定义API主机
-const originalFetch = window.fetch;
-window.fetch = function(...args) {
-    const url = args[0];
-    const apiHost = localStorage.getItem('gemini_api_host');
-    
-    if (apiHost && apiHost.trim() && typeof url === 'string' && url.includes('generativelanguage.googleapis.com')) {
-        try {
-            const originalUrl = new URL(url);
-            let hostWithProtocol = apiHost.trim();
-            
-            // 自动添加协议：如果没有协议，默认添加https://
-            if (!hostWithProtocol.startsWith('http://') && !hostWithProtocol.startsWith('https://')) {
-                hostWithProtocol = 'https://' + hostWithProtocol;
-            }
-            
-            const newHostUrl = new URL(hostWithProtocol);
-            const newUrl = `${newHostUrl.protocol}//${newHostUrl.host}${originalUrl.pathname}${originalUrl.search}`;
-            
-            args[0] = newUrl;
-            console.log('API重定向:', url, '->', newUrl);
-            
-            // 为本地请求添加特殊处理
-            if (args[1]) {
-                args[1] = { ...args[1], mode: 'cors' };
-            } else {
-                args[1] = { mode: 'cors' };
-            }
-            
-        } catch (error) {
-            console.error('URL重写失败:', error);
-        }
-    }
-    
-    return originalFetch.apply(this, args);
-};
-
 let ai: GoogleGenAI | null = null;
 let currentApiKey: string | null = null;
+let currentApiHost: string | null = null;
 
 // This function determines the key to use, prioritizing user-set storage.
 function resolveApiKey(): string | null {
@@ -51,18 +15,44 @@ function resolveApiKey(): string | null {
     return process.env.API_KEY || null;
 }
 
+// This function determines the API host to use, prioritizing user-set storage.
+function resolveApiHost(): string | null {
+    const storedHost = localStorage.getItem('gemini_api_host');
+    if (storedHost && storedHost.trim() !== '') {
+        let hostWithProtocol = storedHost.trim();
+        // 自动添加协议：如果没有协议，默认添加https://
+        if (!hostWithProtocol.startsWith('http://') && !hostWithProtocol.startsWith('https://')) {
+            hostWithProtocol = 'https://' + hostWithProtocol;
+        }
+        return hostWithProtocol;
+    }
+    return null;
+}
+
 // Initializes or re-initializes the AI client.
 function initializeAiClient() {
     const apiKey = resolveApiKey();
+    const apiHost = resolveApiHost();
+    
     if (apiKey) {
-        // Only create a new instance if the key has actually changed.
-        if (apiKey !== currentApiKey) {
-            ai = new GoogleGenAI({ apiKey });
+        // Only create a new instance if the key or host has actually changed.
+        if (apiKey !== currentApiKey || apiHost !== currentApiHost) {
+            const config: any = { apiKey };
+            
+            if (apiHost) {
+                config.httpOptions = { 
+                    baseUrl: apiHost
+                };
+            }
+            
+            ai = new GoogleGenAI(config);
             currentApiKey = apiKey;
+            currentApiHost = apiHost;
         }
     } else {
         ai = null;
         currentApiKey = null;
+        currentApiHost = null;
     }
 }
 
@@ -90,6 +80,17 @@ export function updateApiKey(newKey: string) {
         localStorage.removeItem('gemini_api_key');
     }
     // Re-initialize the client with the new key hierarchy.
+    initializeAiClient();
+}
+
+// Function for the UI to update the API host.
+export function updateApiHost(newHost: string) {
+    if (newHost && newHost.trim() !== '') {
+        localStorage.setItem('gemini_api_host', newHost);
+    } else {
+        localStorage.removeItem('gemini_api_host');
+    }
+    // Re-initialize the client with the new host.
     initializeAiClient();
 }
 

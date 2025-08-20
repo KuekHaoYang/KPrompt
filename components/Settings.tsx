@@ -3,7 +3,7 @@ import GlassCard from './GlassCard';
 import Button from './Button';
 import Input from './Input';
 import { CheckIcon } from './Icon';
-import { getApiKeyAndSource, updateApiKey } from '../services/geminiService';
+import { getApiKeyAndSource, updateApiKey, updateApiHost } from '../services/geminiService';
 import { t, UiLanguage } from '../services/translations';
 
 const Settings: React.FC = () => {
@@ -42,7 +42,7 @@ const Settings: React.FC = () => {
         setKeySource(source);
 
         // Save API Host
-        localStorage.setItem('gemini_api_host', apiHost);
+        updateApiHost(apiHost);
         setInitialHost(apiHost);
 
         setIsSaved(true);
