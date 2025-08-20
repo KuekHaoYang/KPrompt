@@ -1,6 +1,43 @@
 
 import { GoogleGenAI } from "@google/genai";
 
+// 拦截fetch请求并重定向到自定义API主机
+const originalFetch = window.fetch;
+window.fetch = function(...args) {
+    const url = args[0];
+    const apiHost = localStorage.getItem('gemini_api_host');
+    
+    if (apiHost && apiHost.trim() && typeof url === 'string' && url.includes('generativelanguage.googleapis.com')) {
+        try {
+            const originalUrl = new URL(url);
+            let hostWithProtocol = apiHost.trim();
+            
+            // 自动添加协议：如果没有协议，默认添加https://
+            if (!hostWithProtocol.startsWith('http://') && !hostWithProtocol.startsWith('https://')) {
+                hostWithProtocol = 'https://' + hostWithProtocol;
+            }
+            
+            const newHostUrl = new URL(hostWithProtocol);
+            const newUrl = `${newHostUrl.protocol}//${newHostUrl.host}${originalUrl.pathname}${originalUrl.search}`;
+            
+            args[0] = newUrl;
+            console.log('API重定向:', url, '->', newUrl);
+            
+            // 为本地请求添加特殊处理
+            if (args[1]) {
+                args[1] = { ...args[1], mode: 'cors' };
+            } else {
+                args[1] = { mode: 'cors' };
+            }
+            
+        } catch (error) {
+            console.error('URL重写失败:', error);
+        }
+    }
+    
+    return originalFetch.apply(this, args);
+};
+
 let ai: GoogleGenAI | null = null;
 let currentApiKey: string | null = null;
 
